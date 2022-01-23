@@ -1,0 +1,11 @@
+0x01 MANIFEST	".\\res\\manifest\\default.manifest"
+
+0x11 ICON		".\\res\\icon\\ubuntu.ico"
+
+0x21 CURSOR		".\\res\\cursor\\arrow.cur"
+0x22 CURSOR		".\\res\\cursor\\ibeam.cur"
+0x23 CURSOR		".\\res\\cursor\\uparrow.cur"
+0x24 ANICURSOR	".\\res\\cursor\\wait.ani"
+
+0x31 FONT		".\\res\\font\\ubuntu_regular.ttf"
+
