@@ -6,7 +6,7 @@ Ubuntu Pastebin Poster is widget that submits code to <https://paste.ubuntu.com>
 
 
 ## Requirements
-|     |   |
+| Name | Options |
 |  ----  | ----  |
 | **Minimum supported client**  | Windows XP, Windows 2000 Professional with SP3 [desktop apps only] |
 | **Minimum supported server**  | Windows Server 2003, Windows 2000 Server with SP3 [desktop apps only] |
