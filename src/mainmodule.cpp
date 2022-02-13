@@ -2,7 +2,7 @@
 
 MAINMODULE::MAINMODULE ()
 {
-	pFront = FRONT::GetInstance ();
+	pResManager = RESMANAGER::GetInstance ();
 	pMainFront = MAINFRONT::GetInstance ();
 	
 	pRegedit = new REGEDIT;
@@ -35,7 +35,7 @@ bool MAINMODULE::Initilize (HINSTANCE hInstance)
 	ERH erh;
 	
 	// Initialize front
-	if (!pFront -> Initialize (hInstance))
+	if (!pResManager -> Initialize (hInstance))
 		return false;
 	
 	if (!pMainFront -> Initialize ())

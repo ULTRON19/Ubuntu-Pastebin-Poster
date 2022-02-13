@@ -50,11 +50,11 @@
 #include <unordered_map>
 #include "winres.h"
 
-class FRONT
+class RESMANAGER
 {
 public:
 	// Only one instance of FRONT can exist at one time
-	static FRONT* GetInstance ();
+	static RESMANAGER* GetInstance ();
 	
 	// Initialize
 	bool Initialize (HINSTANCE _hInstance);
@@ -75,7 +75,7 @@ public:
 		int nWidth, int nHeight, HWND hWndParent, int hIndex, DWORD dwIndexFont, DWORD dwIndexCursor);
 
 private:
-	FRONT ();
+	RESMANAGER ();
 	
 	// Font
 	RES_FONT rfUbuntu;

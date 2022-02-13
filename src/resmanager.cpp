@@ -1,6 +1,6 @@
-#include "front.h"
+#include "resmanager.h"
 
-FRONT::FRONT ():
+RESMANAGER::RESMANAGER ():
 	hcArrow (nullptr), hcIbeam (nullptr), hcUpArrow (nullptr), hcWait (nullptr),
 	hiUbuntu (nullptr),
 	hInstance (nullptr)
@@ -8,13 +8,13 @@ FRONT::FRONT ():
 	
 }
 
-FRONT* FRONT::GetInstance ()
+RESMANAGER* RESMANAGER::GetInstance ()
 {
-	static FRONT instance;
+	static RESMANAGER instance;
 	return &instance;
 }
 
-bool FRONT::Initialize (HINSTANCE _hInstance)
+bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 {
 	hInstance = _hInstance;
 	
@@ -61,7 +61,7 @@ bool FRONT::Initialize (HINSTANCE _hInstance)
 	return res;
 }
 
-HICON FRONT::GetHICON (DWORD dwIndex)
+HICON RESMANAGER::GetHICON (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
@@ -71,7 +71,7 @@ HICON FRONT::GetHICON (DWORD dwIndex)
 	return nullptr;
 }
 	
-HCURSOR FRONT::GetHCURSOR (DWORD dwIndex)
+HCURSOR RESMANAGER::GetHCURSOR (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
@@ -84,7 +84,7 @@ HCURSOR FRONT::GetHCURSOR (DWORD dwIndex)
 	return nullptr;
 }
 
-HFONT FRONT::GetHFONT (DWORD dwIndex)
+HFONT RESMANAGER::GetHFONT (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
@@ -94,7 +94,7 @@ HFONT FRONT::GetHFONT (DWORD dwIndex)
 	return nullptr;
 }
 
-bool FRONT::InitWindow (WINAPP* pWinApp, DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, 
+bool RESMANAGER::InitWindow (WINAPP* pWinApp, DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, 
 	DWORD dwStyle, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, 
 	std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, 
 	std::function <void (HWND)> _MainLoop)
@@ -142,7 +142,7 @@ bool FRONT::InitWindow (WINAPP* pWinApp, DWORD dwExStyle, LPCSTR lpClassName, LP
 	return pWinApp -> InitializeWindow (wcex, wsex, _WndProc, _MainLoop);
 }
 
-bool FRONT::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, 
+bool RESMANAGER::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, 
 	int nWidth, int nHeight, HWND hWndParent, int hIndex, DWORD dwIndexFont, DWORD dwIndexCursor)
 {
 	HMENU hMenu;

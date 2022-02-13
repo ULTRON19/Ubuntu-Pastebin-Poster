@@ -27,15 +27,10 @@ private:
 	
 	// A function that handles command-line arguments
 	bool GetCmdFilePath (std::wstring& wsFilePath);
-	
-	// Front end
-	FRONT* pFront;
+
+	RESMANAGER* pResManager;
 	MAINFRONT* pMainFront;
-	
-	// Regedit
 	REGEDIT* pRegedit;
-	
-	// Poster
 	POSTER* pPoster;
 	
 	// info path

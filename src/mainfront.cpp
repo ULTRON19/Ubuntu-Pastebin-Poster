@@ -13,7 +13,7 @@ bool MAINFRONT::Initialize ()
 {
 	using namespace std::placeholders;
 
-	FRONT* front = FRONT::GetInstance ();
+	RESMANAGER* front = RESMANAGER::GetInstance ();
 	
 	// Initialize window
 	if (!front -> InitWindow (&mainApp, WS_EX_CLIENTEDGE | WS_EX_ACCEPTFILES,
@@ -106,10 +106,10 @@ void MAINFRONT::PostCompleteHandle (std::wstring wsURL)
 	// Change the cursor state
 #if defined (_M_X64) || defined (__amd64__)
 	SetClassLongPtr (mainApp.GetHWND (), GCLP_HCURSOR, 
-		(LONG_PTR) reinterpret_cast <long long> (FRONT::GetInstance () -> GetHCURSOR (CURSOR_ARROW)));
+		(LONG_PTR) reinterpret_cast <long long> (RESMANAGER::GetInstance () -> GetHCURSOR (CURSOR_ARROW)));
 #else
 	SetClassLongPtr (mainApp.GetHWND (), GCL_HCURSOR, 
-		(LONG_PTR) (FRONT::GetInstance () -> GetHCURSOR (CURSOR_ARROW)));
+		(LONG_PTR) (RESMANAGER::GetInstance () -> GetHCURSOR (CURSOR_ARROW)));
 #endif	
 	
 	// Enable all controls when post complete
@@ -237,7 +237,7 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             		if (postCallBack == nullptr)
             			break;
 					
-					FRONT* front = FRONT::GetInstance ();
+					RESMANAGER* front = RESMANAGER::GetInstance ();
 					std::string sPoster, sSyntax, sExpiration, sFilePath;
 					std::wstring wsUrl;
 					

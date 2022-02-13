@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "front.h"
+#include "resmanager.h"
 
 typedef std::initializer_list <std::pair <std::string, std::string>> LSTPSS;
 typedef std::unordered_map <std::string, std::string> COMBOBOX_ITEM;
