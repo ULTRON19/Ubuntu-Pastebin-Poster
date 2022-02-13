@@ -1,9 +1,10 @@
 #include "poster.h"
 
-POSTER::POSTER ():
-	hSession (nullptr), hConnect (nullptr), hRequest (nullptr)
-{
+#include <fstream>
 
+POSTER::POSTER ():
+	pHttpClient (nullptr)
+{
 }
 
 POSTER* POSTER::GetInstance ()
@@ -12,11 +13,9 @@ POSTER* POSTER::GetInstance ()
 	return &instance;
 }
 
-void CALLBACK POSTER::WinHttpStatusCallBack (HINTERNET hInternet, DWORD_PTR dwContext, 
-		DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
+void POSTER::WinHttpStatusCallBack (DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
 {
 	static bool bSSLError = false;
-	POSTER* pPoster = POSTER::GetInstance ();
 	
 	switch (dwInternetStatus)
     {
@@ -32,58 +31,39 @@ void CALLBACK POSTER::WinHttpStatusCallBack (HINTERNET hInternet, DWORD_PTR dwCo
 				// If you want to allow SSL certificate errors and continue with
             	// the connection, you must allow and initial failure and then
             	// reset the security flags. 
-            
-            	DWORD dwFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA |
-                    SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
-                    SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
-                    SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
-            
-            	// Set option and retry
-            	if (WinHttpSetOption (pPoster -> hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof (dwFlags)))
+            	if (pHttpClient -> SetOption (WINHTTP_OPTION_SECURITY_FLAGS, 
+					SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
+                    SECURITY_FLAG_IGNORE_CERT_CN_INVALID | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE))
             	{
-            		if (!WinHttpSendRequest (pPoster -> hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, 
-						WINHTTP_NO_REQUEST_DATA, 0, (DWORD) pPoster -> sContent.length (), 0))
-						{
-							WINAPP::WinErrorReport (__FUNCTION__, "WinHttpSendRequest", false);
-							pPoster -> PostCallBack (false);
-						}
+            		if (!pHttpClient -> AsyncOperate (&HTTPCLIENT::SendRequest))
+						WinHttpPostCallBack (false);
 				}
 				else
-				{
-					WINAPP::WinErrorReport (__FUNCTION__, "WinHttpSetOption", false);
-					pPoster -> PostCallBack (false);
-				}
+					WinHttpPostCallBack (false);
 				
 				bSSLError = false;
 			}
 			else
-				pPoster -> PostCallBack (false);
+				WinHttpPostCallBack (false);
 				
 			break;
 		}
 		
 		// Send requeset succeed, go to next step	
 		case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
-			if (!WinHttpWriteData (pPoster -> hRequest, pPoster -> sContent.c_str (),
-					(DWORD) pPoster -> sContent.length (), NULL))
-			{
-				WINAPP::WinErrorReport (__FUNCTION__, "WinHttpWriteData", false);
-				pPoster -> PostCallBack (false);
-			}
+			if (!pHttpClient -> AsyncOperate (&HTTPCLIENT::SendData))
+				WinHttpPostCallBack (false);
 			break;
 		
-		// Write data succeed, go to next step
+		// Send data succeed, go to next step
 		case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:
-			if (!WinHttpReceiveResponse (pPoster -> hRequest, NULL))
-			{
-				WINAPP::WinErrorReport (__FUNCTION__, "WinHttpReceiveResponse", false);
-				pPoster -> PostCallBack (false);
-			}
+			if (!pHttpClient -> AsyncOperate (&HTTPCLIENT::ReceiveResponse))
+				WinHttpPostCallBack (false);
 			break;
 		
 		// Receive response succeed, go to next step
 		case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
-			pPoster -> PostCallBack (true);
+			WinHttpPostCallBack (true);
 			break;
 		
 		default:
@@ -92,18 +72,21 @@ void CALLBACK POSTER::WinHttpStatusCallBack (HINTERNET hInternet, DWORD_PTR dwCo
 }
 
 bool POSTER::Post (std::string sPoster, std::string sSyntax, std::string sExpiration, std::string sFilePath)
-{	
-    if (!GenerateForm (sPoster, sSyntax, sExpiration, sFilePath))
-    	return false;
-    	
-    if (!InitHttp ())
+{   	
+    std::string sFile;
+    if (!LoadFile (sFilePath, sFile))
     	return false;
     
+    pHttpClient -> ClearContent ();
+    pHttpClient -> AddContent (FORMDATA, {
+		{"poster", sPoster},
+		{"syntax", sSyntax},
+		{"expiration", sExpiration},
+		{"content", sFile}
+	}, "WebKitFormBoundary7MA4YWxkTrZu0gW");
+    
     // First asynchronous operation
-    if (!WinHttpSendRequest (hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, (DWORD) sContent.length (), 0))
-		return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpSendRequest", true), false;
-		
-	return true;
+    return pHttpClient -> AsyncOperate (&HTTPCLIENT::SendRequest);
 }
 
 void POSTER::SetPostCompleteCallBack (std::function <void (std::wstring)> cbPostComplete)
@@ -111,102 +94,45 @@ void POSTER::SetPostCompleteCallBack (std::function <void (std::wstring)> cbPost
 	postcompleteCallBack = cbPostComplete;
 }
 
-bool POSTER::InitHttp ()
+bool POSTER::Initialize ()
 {
-	DWORD dwFlags = WINHTTP_DISABLE_REDIRECTS;
-	std::wstring wsHeader = std::wstring (L"Content-type: multipart/form-data; ") + 
-		L"boundary=WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
-
-	// Use WinHttpOpen to obtain a session handle.
-	if (!(hSession = WinHttpOpen (L"Paste", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 
-		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, WINHTTP_FLAG_ASYNC)))
-		return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpOpen", true), false;
-		
-	// Set callback
-	if (WinHttpSetStatusCallback (hSession, WinHttpStatusCallBack, 
-		WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
-		return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpSetStatusCallback", true), false;
-    
-    // Specify an HTTP server
-	if (!(hConnect = WinHttpConnect (hSession, PASTE_SERVER, INTERNET_DEFAULT_HTTPS_PORT, 0)))
-		return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpConnect", true), false;
-    
-    // Open a request
-    if (!(hRequest = WinHttpOpenRequest (hConnect, L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
-		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE)))
-    	return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpOpenRequest", true), false;
-    
-    // Set option for a request
-    if (!WinHttpSetOption (hRequest, WINHTTP_OPTION_DISABLE_FEATURE, &dwFlags, sizeof (dwFlags)))
-		return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpSetOption", true), false;
-		
-	// Add additonal header
-	if (!WinHttpAddRequestHeaders (hRequest, wsHeader.c_str (), (DWORD) wsHeader.length (), WINHTTP_ADDREQ_FLAG_ADD))
-        return WINAPP::WinErrorReport (__FUNCTION__, "WinHttpAddRequestHeaders", true), false;
+	pHttpClient = new HTTPCLIENT;
 	
-	return true;
-}
-
-bool POSTER::CoInitHttp ()
-{
-	bool res = true;
-	
-	if (!WinHttpCloseHandle (hRequest))
-	{
-		res = false;
-		WINAPP::WinErrorReport (__FUNCTION__, "WinHttpCloseHandle", false);
-	}
-	
-	if (!WinHttpCloseHandle (hConnect))
-	{
-		res = false;
-		WINAPP::WinErrorReport (__FUNCTION__, "WinHttpCloseHandle", false);
-	}
-	
-	if (!WinHttpCloseHandle (hSession))
-	{
-		res = false;
-		WINAPP::WinErrorReport (__FUNCTION__, "WinHttpCloseHandle", false);
-	}
-	
-	hRequest = nullptr;
-	hConnect = nullptr;
-	hSession = nullptr;
-	
-	return res;
-}
-
-bool POSTER::GenerateForm (std::string sPoster, std::string sSyntax, std::string sExpiration, std::string sFilePath)
-{
-	std::string sFile;
-	if (!LoadFile (sFilePath, sFile))
+	if (!pHttpClient -> OpenHttp (L"Paste", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 
+		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, WINHTTP_FLAG_ASYNC))
 		return false;
 	
-	sContent.clear ();
-	
-	sContent += "--WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
-	sContent += "Content-Disposition: form-data; ";
-	sContent += "name=\"poster\"\r\n\r\n";
-	sContent += sPoster + "\r\n";
-	
-	sContent += "--WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
-	sContent += "Content-Disposition: form-data; ";
-	sContent += "name=\"syntax\"\r\n\r\n";
-	sContent += sSyntax + "\r\n";
-	
-	sContent += "--WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
-	sContent += "Content-Disposition: form-data; ";
-	sContent += "name=\"expiration\"\r\n\r\n";
-	sContent += sExpiration + "\r\n";
-	
-	sContent += "--WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
-	sContent += "Content-Disposition: form-data; ";
-	sContent += "name=\"content\"\r\n\r\n";
-	sContent += sFile + "\r\n";
-	
-	sContent += "\r\n--WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
-	
+	if (!pHttpClient -> ConnectHttp (PASTE_SERVER, INTERNET_DEFAULT_HTTPS_PORT))
+		return false;
+		
+	if (!pHttpClient -> OpenRequest (L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
+		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE))
+		return false;
+		
+	if (!pHttpClient -> SetOption (WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS))
+		return false;
+		
+	if (!pHttpClient -> AddHeader ({
+		{L"Content-type", L"multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW"}
+		}, WINHTTP_ADDREQ_FLAG_ADD))
+		return false;
+		
+	// Set callback
+	using namespace std::placeholders;
+	pHttpClient -> SetRequestCallBack (std::bind (&POSTER::WinHttpStatusCallBack, this, _1, _2, _3));
+		
 	return true;
+}
+
+void POSTER::CoInitialize ()
+{
+	if (!pHttpClient)
+		return;
+	
+	delete pHttpClient;
+	pHttpClient = nullptr;
+	
+	return;
 }
 
 bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
@@ -231,38 +157,22 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 	return true;
 }
 
-void POSTER::PostCallBack (bool isSuccess)
+void POSTER::WinHttpPostCallBack (bool isSuccess)
 {
 	if (isSuccess)
 	{	
-		std::wstring wsURL = L"";
-		DWORD dwSize = 0;
-
-    	// First, use WinHttpQueryHeaders to obtain the size of the buffer.
-    	WinHttpQueryHeaders (hRequest, WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX,
-			NULL, &dwSize, WINHTTP_NO_HEADER_INDEX);
-
-    	// Allocate memory for the buffer.
-    	if (GetLastError () == ERROR_INSUFFICIENT_BUFFER)
-    	{
-    	    wsURL.resize (dwSize / sizeof (WCHAR));
-
-    	    // Now, use WinHttpQueryHeaders to retrieve the header.
-    	    if (WinHttpQueryHeaders (hRequest, WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX,
-				(LPVOID) wsURL.c_str (), &dwSize, WINHTTP_NO_HEADER_INDEX))
-			{
-				wsURL = PASTE_URL + wsURL;
+		std::wstring wsURL;
+		
+		if (pHttpClient -> ReadHeader (WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_NO_HEADER_INDEX, wsURL))
+		{
+			wsURL = PASTE_URL + wsURL;
 			
-				if (postcompleteCallBack)	
-					postcompleteCallBack (wsURL);	
-			
-				CoInitHttp ();
-				return;
-			}
-    	}
+			if (postcompleteCallBack)	
+				postcompleteCallBack (wsURL);
+				
+			return;
+		}
 	}
-	
-	CoInitHttp ();
 	
 	MessageBoxA (NULL, "An error has occurred when sending request", 
 		"Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);

@@ -40,6 +40,10 @@ bool MAINMODULE::Initilize (HINSTANCE hInstance)
 	
 	if (!pMainFront -> Initialize ())
 		return false;
+		
+	// Initialize poster
+	if (!pPoster -> Initialize ())
+		return false;
 	
 	// Set info
 	std::wstring wsFilePath;

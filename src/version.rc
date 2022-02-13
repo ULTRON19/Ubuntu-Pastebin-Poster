@@ -1,6 +1,6 @@
 1 VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,1,1
+ PRODUCTVERSION 1,0,1,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -15,11 +15,11 @@ BEGIN
     BEGIN
         BLOCK "080404b0"
         BEGIN
-            VALUE "FileDescription", "A widget that submits code to paste.ubuntu.com"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "FileDescription", "Ubuntu Pastebin Poster"
+            VALUE "FileVersion", "1.0.1.1"
             VALUE "OriginalFilename", "Ubuntu Pastebin Poster.exe"
             VALUE "ProductName", "Ubuntu Pastebin Poster"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "1.0.1.1"
         END
     END
     BLOCK "VarFileInfo"

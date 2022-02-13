@@ -9,7 +9,6 @@
 		obj = NULL;\
 	}\
 }
-	
 
 #include "winapp.h"
 
