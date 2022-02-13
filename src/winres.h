@@ -15,7 +15,7 @@
 #ifndef __RESOTHER__
 #define __RESOTHER__
 
-class RES_OTHER
+class RESOTHER
 {
 public:
 	// Load resource
@@ -31,8 +31,8 @@ public:
 	// Free resource
 	void FreeRes ();
 	
-	RES_OTHER ();
-	~RES_OTHER ();
+	RESOTHER ();
+	~RESOTHER ();
 	
 private:
 	HGLOBAL hMem;
@@ -44,7 +44,7 @@ private:
 #ifndef __RESFONT__
 #define __RESFONT__
 
-class RES_FONT
+class RESFONT
 {
 public:
 	// Extract font from resource, install it and create the handle
@@ -54,8 +54,8 @@ public:
 	// Get the handle
 	HFONT GetHFONT ();
 	
-	RES_FONT ();
-	~RES_FONT ();
+	RESFONT ();
+	~RESFONT ();
 	
 private:
 	// Install and uninstall font
