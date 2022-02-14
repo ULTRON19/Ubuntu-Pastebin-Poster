@@ -7,6 +7,11 @@ POSTER::POSTER ():
 {
 }
 
+POSTER::~POSTER ()
+{
+	CoInitialize ();
+}
+
 POSTER* POSTER::GetInstance ()
 {
 	static POSTER instance;
@@ -126,13 +131,11 @@ bool POSTER::Initialize ()
 
 void POSTER::CoInitialize ()
 {
-	if (!pHttpClient)
-		return;
-	
-	delete pHttpClient;
-	pHttpClient = nullptr;
-	
-	return;
+	if (pHttpClient)
+	{
+		delete pHttpClient;
+		pHttpClient = nullptr;
+	}
 }
 
 bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)

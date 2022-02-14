@@ -135,7 +135,9 @@ MAINFRONT* MAINFRONT::GetInstance ()
 
 int MAINFRONT::EnterLoop ()
 {
-	return (int) mainApp.EnterMsgLoop ();
+	int res = (int) mainApp.EnterMsgLoop ();
+	ZeroAllControls ();
+	return res;
 }
 
 void MAINFRONT::AddComboBoxItem (HWND& hControl, COMBOBOX_ITEM& cbiControl, LSTPSS& lstControl)
@@ -315,11 +317,6 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
         // Destroy Window
 		case WM_DESTROY:
 			PostQuitMessage (0);
-			break;
-		
-		// Set all handles to nullptr	
-		case WM_NCDESTROY:
-			ZeroAllControls ();
 			break;
 			
 		default:

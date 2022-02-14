@@ -10,13 +10,18 @@ MAINMODULE::MAINMODULE ()
 	pPoster = POSTER::GetInstance ();
 }
 
+MAINMODULE::~MAINMODULE ()
+{
+	CoInitialize ();
+}
+
 MAINMODULE* MAINMODULE::GetInstance ()
 {
 	static MAINMODULE instance;
 	return &instance;
 }
 
-bool MAINMODULE::Initilize (HINSTANCE hInstance)
+bool MAINMODULE::Initialize (HINSTANCE hInstance)
 {
 	// Locate the file
 	char* cbuffer = new char [MAX_PATHLEN];
@@ -31,6 +36,9 @@ bool MAINMODULE::Initilize (HINSTANCE hInstance)
 	
 	// Set info path
 	sSettingsPath = std::string (cbuffer) + DEFAULT_SETTINGSNAME;
+	
+	delete [] cbuffer;
+	cbuffer = nullptr;
 	
 	ERH erh;
 	
@@ -62,8 +70,16 @@ bool MAINMODULE::Initilize (HINSTANCE hInstance)
 	
 	pPoster -> SetPostCompleteCallBack (std::bind (&MAINFRONT::PostCompleteHandle, pMainFront, _1));
 	
-	delete [] cbuffer;
 	return true;
+}
+
+void MAINMODULE::CoInitialize ()
+{
+	if (pRegedit)
+	{
+		delete pRegedit;
+		pRegedit = nullptr;
+	}
 }
 
 int MAINMODULE::EnterLoop ()

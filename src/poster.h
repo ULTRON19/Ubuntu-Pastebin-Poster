@@ -27,6 +27,8 @@ public:
 	// Set call back
 	void SetPostCompleteCallBack (std::function <void (std::wstring)> cbPostComplete);
 	
+	~POSTER ();
+	
 private:
 	POSTER ();
 	

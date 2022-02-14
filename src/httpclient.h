@@ -46,6 +46,7 @@ public:
 	// Set option
 	bool SetOption (DWORD dwOption, DWORD dwFlags);
 	void SetRequestCallBack (std::function <void (DWORD, LPVOID, DWORD)> cbRequest);
+	void RemoveRequestCallBack ();
 	
 	// Close handles
 	bool CloseHttp ();

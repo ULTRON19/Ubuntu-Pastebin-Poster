@@ -14,7 +14,7 @@ public:
 	// Only one instance of MAINFRONT can exist at one time
 	static MAINFRONT* GetInstance ();
 	
-	// Initialize
+	// Init
 	bool Initialize ();
 	
 	// Set option for control

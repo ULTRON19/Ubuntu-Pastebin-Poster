@@ -58,6 +58,7 @@ public:
 	
 	// Initialize
 	bool Initialize (HINSTANCE _hInstance);
+	void CoInitialize ();
 	
 	// Get resource
 	HICON GetHICON (DWORD dwIndex);
@@ -74,6 +75,8 @@ public:
 	bool InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y,
 		int nWidth, int nHeight, HWND hWndParent, int hIndex, DWORD dwIndexFont, DWORD dwIndexCursor);
 
+	~RESMANAGER ();
+	
 private:
 	RESMANAGER ();
 	

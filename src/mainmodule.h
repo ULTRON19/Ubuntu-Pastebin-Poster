@@ -17,10 +17,13 @@ public:
 	static MAINMODULE* GetInstance ();
 	
 	// Initialize
-	bool Initilize (HINSTANCE hInstance);
+	bool Initialize (HINSTANCE hInstance);
+	void CoInitialize ();
 	
 	// Main loop
 	int EnterLoop ();
+	
+	~MAINMODULE ();
 	
 private:
 	MAINMODULE ();

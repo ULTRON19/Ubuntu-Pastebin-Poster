@@ -41,7 +41,6 @@ public:
 	WPARAM EnterMsgLoop ();
 	
 	WINAPP ();
-
 private:
 	// Window Handle
 	HWND m_hwnd;

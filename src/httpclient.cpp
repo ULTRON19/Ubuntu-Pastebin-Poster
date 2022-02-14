@@ -12,6 +12,14 @@ HTTPCLIENT::HTTPCLIENT ():
 
 HTTPCLIENT::~HTTPCLIENT ()
 {
+	if (pszOutBuffer)
+	{
+		delete pszOutBuffer;
+		pszOutBuffer = nullptr;
+	}
+	
+	RemoveRequestCallBack ();
+	
 	CloseRequest ();
 	CloseConnect ();
 	CloseHttp ();
@@ -322,6 +330,18 @@ bool HTTPCLIENT::SetOption (DWORD dwOption, DWORD dwFlags)
 void HTTPCLIENT::SetRequestCallBack (std::function <void (DWORD, LPVOID, DWORD)> cbRequest)
 {
 	requestCallBack = cbRequest;
+}
+
+void HTTPCLIENT::RemoveRequestCallBack ()
+{
+	if (!requestCallBack)
+		return;
+		
+	requestCallBack = nullptr;
+	
+	if (WinHttpSetStatusCallback (hRequest, nullptr, 
+		WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
+		HttpErrorReport (__FUNCTION__, "WinHttpSetStatusCallback", true);
 }
 
 bool HTTPCLIENT::CloseHttp ()

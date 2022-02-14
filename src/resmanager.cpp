@@ -5,7 +5,11 @@ RESMANAGER::RESMANAGER ():
 	hiUbuntu (nullptr),
 	hInstance (nullptr)
 {
-	
+}
+
+RESMANAGER::~RESMANAGER ()
+{
+	CoInitialize ();
 }
 
 RESMANAGER* RESMANAGER::GetInstance ()
@@ -59,6 +63,16 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 		res = false;
 		
 	return res;
+}
+
+void RESMANAGER::CoInitialize ()
+{
+	SAFE_DELETE_OBJ (hiUbuntu);
+	SAFE_DELETE_OBJ (hcArrow);
+	SAFE_DELETE_OBJ (hcIbeam);
+	SAFE_DELETE_OBJ (hcUpArrow);
+	SAFE_DELETE_OBJ (hcWait);
+	rfUbuntu.CoUninitializeFont ();
 }
 
 HICON RESMANAGER::GetHICON (DWORD dwIndex)
