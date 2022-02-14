@@ -4,9 +4,7 @@ MAINMODULE::MAINMODULE ()
 {
 	pResourceManager = RESMANAGER::GetInstance ();
 	pMainFront = MAINFRONT::GetInstance ();
-	
 	pRegistrant = new REGISTRANT;
-	
 	pPoster = POSTER::GetInstance ();
 }
 
@@ -24,36 +22,30 @@ MAINMODULE* MAINMODULE::GetInstance ()
 bool MAINMODULE::Initialize (HINSTANCE hInstance)
 {
 	// Locate the file
-	char* cbuffer = new char [MAX_PATHLEN];
-	GetModuleFileNameA (NULL, cbuffer, MAX_PATH);
+	std::string sFolderPath, sFileName;
 	
+	if (!GetExecuteFilePath (sFolderPath, sFileName))
+		return false;
+		
 	// Initialize regedit
-	pRegistrant -> Initialize (cbuffer);
+	pRegistrant -> Initialize (sFolderPath + "\\" + sFileName);
 	
-	// Get the path and initial error reporter
-	_tcsrchr (cbuffer, '\\') [0] = '\0';
-	ERRHANDLER::sDefaultFilePath = std::string (cbuffer);
-	
-	// Set info path
-	sSettingsPath = std::string (cbuffer) + DEFAULT_SETTINGSNAME;
-	
-	delete [] cbuffer;
-	cbuffer = nullptr;
-	
+	// Initialize error handler
+	ERRHANDLER::sDefaultFilePath = sFolderPath;
 	ERRHANDLER erh;
 	
-	// Initialize front
+	// Initialize resource
 	if (!pResourceManager -> Initialize (hInstance))
-		return false;
-	
-	if (!pMainFront -> Initialize ())
 		return false;
 		
 	// Initialize poster
 	if (!pPoster -> Initialize ())
 		return false;
 	
-	// Set info
+	// Initialize main front
+	if (!pMainFront -> Initialize ())
+		return false;
+	
 	std::wstring wsFilePath;
 	
 	if (GetCmdFilePath (wsFilePath))
@@ -85,6 +77,28 @@ void MAINMODULE::CoInitialize ()
 int MAINMODULE::EnterLoop ()
 {
 	return pMainFront -> EnterLoop ();
+}
+
+bool MAINMODULE::GetExecuteFilePath (std::string& sFolderPath, std::string& sFileName)
+{
+	char* pcBuffer = new char [MAX_PATHLEN];
+	
+	if (GetModuleFileNameA (NULL, pcBuffer, MAX_PATH) == 0)
+	{
+		MessageBox (NULL, "Locate the file failed!", "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		
+		delete [] pcBuffer;
+		return false;
+	}
+	
+	char* pSeparator = _tcsrchr (pcBuffer, '\\');
+	pSeparator [0] = '\0';
+	
+	sFolderPath = std::string (pcBuffer);
+	sFileName = std::string (++ pSeparator);
+	
+	delete [] pcBuffer;
+	return true;
 }
 
 bool MAINMODULE::GetCmdFilePath (std::wstring& wsFilePath)

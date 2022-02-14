@@ -22,13 +22,13 @@ void REGISTRANT::RegErrorReport (std::string mainFunc, const char* func, LSTATUS
 	MessageBoxA (NULL, errAlert.c_str (), "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
-void REGISTRANT::Initialize (LPCSTR lpwsApplication)
+void REGISTRANT::Initialize (std::string _sApplication)
 {
 	sRegKey = std::string ("*\\shell\\") + DEFAULT_REGKEYNAME;
     sRegSubKey = std::string ("*\\shell\\") + DEFAULT_REGKEYNAME + "\\command";
     sRegIconKey = "Icon";
     sMenuText = DEFAULT_MENUTEXT;
-    sApplication = lpwsApplication;
+    sApplication = _sApplication;
     bRightMenu = RegCheckExist ();
 }
 

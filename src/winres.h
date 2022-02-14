@@ -15,7 +15,7 @@
 class WINRES
 {
 public:
-	// Load / Free resource
+	// Init / CoInit
 	bool Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType);
 	void CoInitialize ();
 	

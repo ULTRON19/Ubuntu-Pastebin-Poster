@@ -22,7 +22,7 @@ public:
 	// Error report
 	static void RegErrorReport (std::string mainFunc, const char* func, LSTATUS errCode);
 	
-	void Initialize (LPCSTR lpwsApplication);
+	void Initialize (std::string _sApplication);
 	
 	// Get / Set status
 	bool GetStatus ();

@@ -1,8 +1,6 @@
 #ifndef __MAINMODULE__
 #define __MAINMODULE__
 
-#define DEFAULT_SETTINGSNAME "\\settings.ini"
-
 #include <tchar.h>
 
 #include "poster.h"
@@ -28,16 +26,13 @@ public:
 private:
 	MAINMODULE ();
 	
-	// A function that handles command-line arguments
+	bool GetExecuteFilePath (std::string& sFolderPath, std::string& sFileName);
 	bool GetCmdFilePath (std::wstring& wsFilePath);
 
 	RESMANAGER* pResourceManager;
 	MAINFRONT* pMainFront;
 	REGISTRANT* pRegistrant;
 	POSTER* pPoster;
-	
-	// info path
-	std::string sSettingsPath;
 };
 
 #endif
