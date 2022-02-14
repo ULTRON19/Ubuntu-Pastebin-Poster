@@ -12,39 +12,25 @@
 
 #include "winapp.h"
 
-#ifndef __RESOTHER__
-#define __RESOTHER__
-
-class RESOTHER
+class WINRES
 {
 public:
-	// Load resource
+	// Load / Free resource
 	bool LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType);
-	
-	// Get the handle and size
-	HGLOBAL GetHGLOBAL ();
-	DWORD GetSize ();
+	void FreeRes ();
 	
 	// Write resource to local file
 	bool ExtractToLocal (LPCWSTR lpFileName);
 	
-	// Free resource
-	void FreeRes ();
+	WINRES ();
+	~WINRES ();
 	
-	RESOTHER ();
-	~RESOTHER ();
-	
-private:
+protected:
 	HGLOBAL hMem;
 	DWORD dwSize;	
 };
 
-#endif
-
-#ifndef __RESFONT__
-#define __RESFONT__
-
-class RESFONT
+class WINFONT: WINRES
 {
 public:
 	// Extract font from resource, install it and create the handle
@@ -54,8 +40,8 @@ public:
 	// Get the handle
 	HFONT GetHFONT ();
 	
-	RESFONT ();
-	~RESFONT ();
+	WINFONT ();
+	~WINFONT ();
 	
 private:
 	// Install and uninstall font
@@ -69,7 +55,5 @@ private:
 	HANDLE fontInstaller;
 	HFONT fontHandle;
 };
-
-#endif
 
 #endif

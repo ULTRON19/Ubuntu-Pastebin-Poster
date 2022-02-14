@@ -1,29 +1,19 @@
 #include "winres.h"
 
-// RESOTHER
+// WINRES
 
-RESOTHER::RESOTHER ():
+WINRES::WINRES ():
 	hMem (nullptr),
 	dwSize (0)
 {
 }
 
-RESOTHER::~RESOTHER ()
+WINRES::~WINRES ()
 {
 	FreeRes ();
 }
 
-HGLOBAL RESOTHER::GetHGLOBAL ()
-{
-	return hMem;
-}
-
-DWORD RESOTHER::GetSize ()
-{
-	return dwSize;
-}
-
-bool RESOTHER::LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
+bool WINRES::LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
 {
 	HRSRC hRes = FindResourceW (hInstance, lpName, lpType);
 	if (hRes == nullptr)
@@ -38,7 +28,7 @@ bool RESOTHER::LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
 	return true;
 }
 
-bool RESOTHER::ExtractToLocal (LPCWSTR lpFileName)
+bool WINRES::ExtractToLocal (LPCWSTR lpFileName)
 {
 	HANDLE hFile = CreateFileW (lpFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
 	
@@ -55,7 +45,7 @@ bool RESOTHER::ExtractToLocal (LPCWSTR lpFileName)
 	return res;
 }
 
-void RESOTHER::FreeRes ()
+void WINRES::FreeRes ()
 {
 	if (hMem)
 		FreeResource (hMem);
@@ -63,25 +53,26 @@ void RESOTHER::FreeRes ()
 	hMem = nullptr;
 }
 
-// RESFONT
+// WINFONT
 
-RESFONT::RESFONT ():
+WINFONT::WINFONT ():
 	fontInstaller (nullptr),
 	fontHandle (nullptr)
 {
 }
 
-RESFONT::~RESFONT ()
+WINFONT::~WINFONT ()
 {
 	CoUninitializeFont ();
+	FreeRes ();
 }
 
-HFONT RESFONT::GetHFONT ()
+HFONT WINFONT::GetHFONT ()
 {
 	return fontHandle;
 }
 
-bool RESFONT::InitializeFont (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
+bool WINFONT::InitializeFont (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
 {
 	if (hInstance == nullptr)
 		return false;
@@ -92,37 +83,36 @@ bool RESFONT::InitializeFont (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _r
 	return CreateHFONT (_fontName, _size, _bold, _italic, _underline, _strlikeOut);
 }
 
-void RESFONT::CoUninitializeFont ()
+void WINFONT::CoUninitializeFont ()
 {
 	UninstallFont ();
 	DestroyHFONT ();
 }
 
-bool RESFONT::InstallFont (HINSTANCE hInstance, LPCWSTR _resId)
+bool WINFONT::InstallFont (HINSTANCE hInstance, LPCWSTR _resId)
 {	
-	RESOTHER fontRes;
-	if (!fontRes.LoadRes (hInstance, _resId, MAKEINTRESOURCEW (8))) // MAKEINTRESOURCEW (8) RT_FONT
+	if (!LoadRes (hInstance, _resId, MAKEINTRESOURCEW (8))) // MAKEINTRESOURCEW (8) RT_FONT
 		return false;
 	
-	HANDLE pvData = LockResource (fontRes.GetHGLOBAL ());
+	HANDLE pvData = LockResource (hMem);
 	if (pvData == nullptr)
 		return WINAPP::WinErrorReport (__FUNCTION__, "LockResource", false), false;
 	
 	DWORD nFontsInstalled = 0;
-	fontInstaller = AddFontMemResourceEx (pvData, fontRes.GetSize (), NULL, &nFontsInstalled);
+	fontInstaller = AddFontMemResourceEx (pvData, dwSize, NULL, &nFontsInstalled);
 	if (fontInstaller == nullptr)
 		return WINAPP::WinErrorReport (__FUNCTION__, "AddFontMemResourceEx", false), false;
 	
 	return true;
 }
 
-bool RESFONT::CreateHFONT (LPCWSTR _fontName, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
+bool WINFONT::CreateHFONT (LPCWSTR _fontName, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
 {
 	fontHandle = CreateFontW (_size, 0, 0, 0, _bold, _italic, _underline, _strlikeOut, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, VARIABLE_PITCH, _fontName);
 	return fontHandle ? true : false;
 }
 
-void RESFONT::UninstallFont ()
+void WINFONT::UninstallFont ()
 {
 	if (fontInstaller) 
 	{
@@ -131,7 +121,7 @@ void RESFONT::UninstallFont ()
 	}
 }
 
-void RESFONT::DestroyHFONT ()
+void WINFONT::DestroyHFONT ()
 {
 	SAFE_DELETE_OBJ (fontHandle);
 }

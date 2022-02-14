@@ -81,7 +81,7 @@ private:
 	RESMANAGER ();
 	
 	// Font
-	RESFONT rfUbuntu;
+	WINFONT rfUbuntu;
 	// Cursor
 	HCURSOR hcArrow, hcIbeam, hcUpArrow, hcWait;
 	// ICON
