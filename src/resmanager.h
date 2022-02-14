@@ -61,9 +61,9 @@ public:
 	void CoInitialize ();
 	
 	// Get resource
-	HICON GetHICON (DWORD dwIndex);
-	HCURSOR GetHCURSOR (DWORD dwIndex);
-	HFONT GetHFONT (DWORD dwIndex);
+	HICON GetIconHandle (DWORD dwIndex);
+	HCURSOR GetCursorHandle (DWORD dwIndex);
+	HFONT GetFontHandle (DWORD dwIndex);
 	
 	// Initialize window
 	bool InitWindow (WINAPP* pWinApp, DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, 

@@ -10,10 +10,10 @@ WINRES::WINRES ():
 
 WINRES::~WINRES ()
 {
-	FreeRes ();
+	CoInitialize ();
 }
 
-bool WINRES::LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
+bool WINRES::Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
 {
 	HRSRC hRes = FindResourceW (hInstance, lpName, lpType);
 	if (hRes == nullptr)
@@ -22,7 +22,7 @@ bool WINRES::LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
 	hMem = LoadResource (nullptr, hRes);
 	
 	if (hMem == nullptr)
-		return WINAPP::WinErrorReport (__FUNCTION__, "LoadResource", false), false;
+		return WINAPP::WinErrorReport (__FUNCTION__, "Initializeource", false), false;
 		
 	dwSize = SizeofResource (nullptr, hRes);
 	return true;
@@ -45,7 +45,7 @@ bool WINRES::ExtractToLocal (LPCWSTR lpFileName)
 	return res;
 }
 
-void WINRES::FreeRes ()
+void WINRES::CoInitialize ()
 {
 	if (hMem)
 		FreeResource (hMem);
@@ -63,16 +63,15 @@ WINFONT::WINFONT ():
 
 WINFONT::~WINFONT ()
 {
-	CoUninitializeFont ();
-	FreeRes ();
+	CoUninitialize ();
 }
 
-HFONT WINFONT::GetHFONT ()
+HFONT WINFONT::GetFontHandle ()
 {
 	return fontHandle;
 }
 
-bool WINFONT::InitializeFont (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
+bool WINFONT::Initialize (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
 {
 	if (hInstance == nullptr)
 		return false;
@@ -80,18 +79,19 @@ bool WINFONT::InitializeFont (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _r
 	if (_resId && !InstallFont (hInstance, _resId))
 		return false;
 	
-	return CreateHFONT (_fontName, _size, _bold, _italic, _underline, _strlikeOut);
+	return CreateFontHandle (_fontName, _size, _bold, _italic, _underline, _strlikeOut);
 }
 
-void WINFONT::CoUninitializeFont ()
+void WINFONT::CoUninitialize ()
 {
 	UninstallFont ();
-	DestroyHFONT ();
+	DestroyFontHandle ();
+	WINRES::CoInitialize ();
 }
 
 bool WINFONT::InstallFont (HINSTANCE hInstance, LPCWSTR _resId)
 {	
-	if (!LoadRes (hInstance, _resId, MAKEINTRESOURCEW (8))) // MAKEINTRESOURCEW (8) RT_FONT
+	if (!WINRES::Initialize (hInstance, _resId, MAKEINTRESOURCEW (8))) // MAKEINTRESOURCEW (8) RT_FONT
 		return false;
 	
 	HANDLE pvData = LockResource (hMem);
@@ -106,7 +106,7 @@ bool WINFONT::InstallFont (HINSTANCE hInstance, LPCWSTR _resId)
 	return true;
 }
 
-bool WINFONT::CreateHFONT (LPCWSTR _fontName, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
+bool WINFONT::CreateFontHandle (LPCWSTR _fontName, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut)
 {
 	fontHandle = CreateFontW (_size, 0, 0, 0, _bold, _italic, _underline, _strlikeOut, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, VARIABLE_PITCH, _fontName);
 	return fontHandle ? true : false;
@@ -121,7 +121,7 @@ void WINFONT::UninstallFont ()
 	}
 }
 
-void WINFONT::DestroyHFONT ()
+void WINFONT::DestroyFontHandle ()
 {
 	SAFE_DELETE_OBJ (fontHandle);
 }

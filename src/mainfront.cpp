@@ -106,10 +106,10 @@ void MAINFRONT::PostCompleteHandle (std::wstring wsURL)
 	// Change the cursor state
 #if defined (_M_X64) || defined (__amd64__)
 	SetClassLongPtr (mainApp.GetHWND (), GCLP_HCURSOR, 
-		(LONG_PTR) reinterpret_cast <long long> (RESMANAGER::GetInstance () -> GetHCURSOR (CURSOR_ARROW)));
+		(LONG_PTR) reinterpret_cast <long long> (RESMANAGER::GetInstance () -> GetCursorHandle (CURSOR_ARROW)));
 #else
 	SetClassLongPtr (mainApp.GetHWND (), GCL_HCURSOR, 
-		(LONG_PTR) (RESMANAGER::GetInstance () -> GetHCURSOR (CURSOR_ARROW)));
+		(LONG_PTR) (RESMANAGER::GetInstance () -> GetCursorHandle (CURSOR_ARROW)));
 #endif	
 	
 	// Enable all controls when post complete
@@ -256,10 +256,10 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 					// Change the cursor state
 #if defined (_M_X64) || defined (__amd64__)
 					SetClassLongPtr (mainApp.GetHWND (), GCLP_HCURSOR, 
-						(LONG_PTR) reinterpret_cast <long long> (front -> GetHCURSOR (CURSOR_WAIT)));
+						(LONG_PTR) reinterpret_cast <long long> (front -> GetCursorHandle (CURSOR_WAIT)));
 #else
 					SetClassLongPtr (mainApp.GetHWND (), GCL_HCURSOR, 
-						(LONG_PTR) front -> GetHCURSOR (CURSOR_WAIT));
+						(LONG_PTR) front -> GetCursorHandle (CURSOR_WAIT));
 #endif	
 
 					if (!postCallBack (sPoster, sSyntax, sExpiration, sFilePath))

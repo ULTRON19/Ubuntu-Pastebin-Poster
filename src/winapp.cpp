@@ -55,7 +55,7 @@ LRESULT CALLBACK WINAPP::GlobalWndProc (HWND hwnd, UINT Message, WPARAM wParam, 
 	return lRet;
 }
 
-LPCSTR WINAPP::InitializeWindow (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, std::function <void (HWND)> _MainLoop)
+LPCSTR WINAPP::Initialize (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, std::function <void (HWND)> _MainLoop)
 {
 	WndProc = _WndProc;
 	MainLoop = _MainLoop;

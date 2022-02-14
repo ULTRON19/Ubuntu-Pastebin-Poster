@@ -16,8 +16,8 @@ class WINRES
 {
 public:
 	// Load / Free resource
-	bool LoadRes (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType);
-	void FreeRes ();
+	bool Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType);
+	void CoInitialize ();
 	
 	// Write resource to local file
 	bool ExtractToLocal (LPCWSTR lpFileName);
@@ -34,11 +34,11 @@ class WINFONT: WINRES
 {
 public:
 	// Extract font from resource, install it and create the handle
-	bool InitializeFont (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId = NULL, int _size = FW_DONTCARE, int _bold = FW_DONTCARE, bool _italic = false, bool _underline = false, bool _strlikeOut = false);
-	void CoUninitializeFont ();
+	bool Initialize (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId = NULL, int _size = FW_DONTCARE, int _bold = FW_DONTCARE, bool _italic = false, bool _underline = false, bool _strlikeOut = false);
+	void CoUninitialize ();
 	
 	// Get the handle
-	HFONT GetHFONT ();
+	HFONT GetFontHandle ();
 	
 	WINFONT ();
 	~WINFONT ();
@@ -49,8 +49,8 @@ private:
 	void UninstallFont ();
 	
 	// Create the handle
-	bool CreateHFONT (LPCWSTR _fontName, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut);
-	void DestroyHFONT ();
+	bool CreateFontHandle (LPCWSTR _fontName, int _size, int _bold, bool _italic, bool _underline, bool _strlikeOut);
+	void DestroyFontHandle ();
 	
 	HANDLE fontInstaller;
 	HFONT fontHandle;

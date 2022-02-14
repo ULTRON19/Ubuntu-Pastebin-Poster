@@ -59,7 +59,7 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 		res = false;
 	}
 	
-	if (!rfUbuntu.InitializeFont (hInstance, L"Ubuntu", MAKEINTRESOURCEW (FONT_UBUNTU), 20, FW_DONTCARE, false, false, false))
+	if (!rfUbuntu.Initialize (hInstance, L"Ubuntu", MAKEINTRESOURCEW (FONT_UBUNTU), 20, FW_DONTCARE, false, false, false))
 		res = false;
 		
 	return res;
@@ -72,10 +72,10 @@ void RESMANAGER::CoInitialize ()
 	SAFE_DELETE_OBJ (hcIbeam);
 	SAFE_DELETE_OBJ (hcUpArrow);
 	SAFE_DELETE_OBJ (hcWait);
-	rfUbuntu.CoUninitializeFont ();
+	rfUbuntu.CoUninitialize ();
 }
 
-HICON RESMANAGER::GetHICON (DWORD dwIndex)
+HICON RESMANAGER::GetIconHandle (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
@@ -85,7 +85,7 @@ HICON RESMANAGER::GetHICON (DWORD dwIndex)
 	return nullptr;
 }
 	
-HCURSOR RESMANAGER::GetHCURSOR (DWORD dwIndex)
+HCURSOR RESMANAGER::GetCursorHandle (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
@@ -98,11 +98,11 @@ HCURSOR RESMANAGER::GetHCURSOR (DWORD dwIndex)
 	return nullptr;
 }
 
-HFONT RESMANAGER::GetHFONT (DWORD dwIndex)
+HFONT RESMANAGER::GetFontHandle (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
-		case FONT_UBUNTU:		return rfUbuntu.GetHFONT ();
+		case FONT_UBUNTU:		return rfUbuntu.GetFontHandle ();
 	}
 	
 	return nullptr;
@@ -153,7 +153,7 @@ bool RESMANAGER::InitWindow (WINAPP* pWinApp, DWORD dwExStyle, LPCSTR lpClassNam
 	wsex.lpParam		=	pWinApp;
 	
 	using namespace std::placeholders;
-	return pWinApp -> InitializeWindow (wcex, wsex, _WndProc, _MainLoop);
+	return pWinApp -> Initialize (wcex, wsex, _WndProc, _MainLoop);
 }
 
 bool RESMANAGER::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, 
@@ -175,11 +175,11 @@ bool RESMANAGER::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindo
 		return WINAPP::WinErrorReport (__FUNCTION__, "CreateWindowA", true), false;
 	
 	// Set font
-	SendMessage (hControl, WM_SETFONT, (WPARAM) (dwIndexFont ? GetHFONT (dwIndexFont) : 0), 0);
+	SendMessage (hControl, WM_SETFONT, (WPARAM) (dwIndexFont ? GetFontHandle (dwIndexFont) : 0), 0);
 	
 	if (dwIndexCursor)
 	{
-		HCURSOR hCursor = GetHCURSOR (dwIndexCursor);
+		HCURSOR hCursor = GetCursorHandle (dwIndexCursor);
 	
 		// Let the pointer change form when the focus is on the control
 		// 32-bit compilation is different from 64-bit compilation

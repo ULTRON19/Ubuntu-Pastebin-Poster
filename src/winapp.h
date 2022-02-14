@@ -7,8 +7,8 @@
 #define Screen_FullWidth	(GetSystemMetrics (SM_CXSCREEN))
 #define Screen_FullHeight	(GetSystemMetrics (SM_CYSCREEN))
 
-// This structure is used for 'CreateWindowA' function, its memeber 
-// correspond to the parameters of the 'CreateWindow' function
+// This structure is used for 'CreateWindowEx' function, its memeber 
+// map to the parameters of the 'CreateWindowEx' function
 struct WNDSTYLEEXA
 {
 	DWORD		dwExStyle;
@@ -35,7 +35,7 @@ public:
 	static LRESULT CALLBACK GlobalWndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 	// Initialize window
-	LPCSTR InitializeWindow (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, std::function <void (HWND)> _MainLoop = nullptr);
+	LPCSTR Initialize (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, std::function <void (HWND)> _MainLoop = nullptr);
 
 	HWND GetHWND ();
 	WPARAM EnterMsgLoop ();
