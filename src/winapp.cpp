@@ -1,7 +1,7 @@
 #include "winApp.h"
 
 WINAPP::WINAPP ():
-	m_hwnd (nullptr),
+	hwnd (nullptr),
 	WndProc (nullptr),
 	MainLoop (nullptr)
 {
@@ -9,7 +9,7 @@ WINAPP::WINAPP ():
 
 void WINAPP::WinErrorReport (std::string mainFunc, const char* func, bool isAlert)
 {
-	ERH ErrorReport;
+	ERRHANDLER ErrorReport;
 	char msgbuf [256] = {0};
 	int err = GetLastError ();
 
@@ -27,7 +27,7 @@ void WINAPP::WinErrorReport (std::string mainFunc, const char* func, bool isAler
 	ErrorReport (mainFunc, errMsg, isAlert);
 }
 
-LRESULT CALLBACK WINAPP::G_WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WINAPP::GlobalWndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	WINAPP* pThis = nullptr;
 	LRESULT lRet = 0;
@@ -72,7 +72,7 @@ LPCSTR WINAPP::InitializeWindow (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& ws
 	}
 
 	// Create window
-	m_hwnd = CreateWindowExA (wsexa.dwExStyle,
+	hwnd = CreateWindowExA (wsexa.dwExStyle,
 							  wsexa.lpClassName,
 							  wsexa.lpWindowName,
 							  wsexa.dwStyle,
@@ -85,7 +85,7 @@ LPCSTR WINAPP::InitializeWindow (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& ws
 							  wsexa.hInstance,
 							  wsexa.lpParam);
 
-	if (m_hwnd == nullptr)
+	if (hwnd == nullptr)
 	{
 		WinErrorReport (__FUNCTION__, "CreateWindowExA", true);
 		return nullptr;
@@ -96,7 +96,7 @@ LPCSTR WINAPP::InitializeWindow (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& ws
 
 HWND WINAPP::GetHWND ()
 {
-	return this -> m_hwnd;
+	return this -> hwnd;
 }
 
 WPARAM WINAPP::EnterMsgLoop ()
@@ -113,11 +113,11 @@ WPARAM WINAPP::EnterMsgLoop ()
 		else
 		{
 			if (MainLoop)
-				MainLoop (m_hwnd);
+				MainLoop (hwnd);
 
 			Sleep (30);
 		}
 		
-	m_hwnd = nullptr;
+	hwnd = nullptr;
 	return msg.wParam;
 }

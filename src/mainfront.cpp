@@ -403,7 +403,7 @@ bool MAINFRONT::GetChooseFilePath (std::string& sFilePath)
 		if (errCode)
 		{
 			std::string errMsg = "A error occured.\nDialog error code: " + std::to_string (errCode);
-			ERH () ("GetChooseFilePath - GetOpenFileNameA", errMsg, true);
+			ERRHANDLER () ("GetChooseFilePath - GetOpenFileNameA", errMsg, true);
 		}
 		
 		delete [] cbuffer;

@@ -1,10 +1,10 @@
-#ifndef __REGEDIT__
-#define __REGEDIT__
+#ifndef __REGISTRANT__
+#define __REGISTRANT__
 
 #define DEFAULT_REGKEYNAME	"Ubuntu Pastebin Poster"
 #define DEFAULT_MENUTEXT	"Post by Ubuntu Pastebin Poster"
 
-#include "erh.h"
+#include "errhandler.h"
 
 /*
 -- HKEY_CLASSES_ROOT
@@ -16,7 +16,7 @@
 
 */
 
-class REGEDIT
+class REGISTRANT
 {
 public:
 	// Error report

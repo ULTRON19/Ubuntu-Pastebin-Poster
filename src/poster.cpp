@@ -142,12 +142,12 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 {
 	// Check the file path
 	if (!~_access (sFilePath.c_str (), 4))
-		return ERH () ("LoadFile", "Invalid file path", true), false;
+		return ERRHANDLER () ("LoadFile", "Invalid file path", true), false;
 	
 	std::fstream file (sFilePath, std::ios::in | std::ios::binary);
 	
 	if (!file.good ())
-		return ERH () ("LoadFile", "Cannot open file", true), false;
+		return ERRHANDLER () ("LoadFile", "Cannot open file", true), false;
 	
 	// Ignoring spaces is not allowed
 	file.unsetf (std::ios::skipws);

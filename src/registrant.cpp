@@ -1,8 +1,8 @@
-#include "regedit.h"
+#include "registrant.h"
 
-void REGEDIT::RegErrorReport (std::string mainFunc, const char* func, LSTATUS errCode)
+void REGISTRANT::RegErrorReport (std::string mainFunc, const char* func, LSTATUS errCode)
 {
-	ERH ErrorReport;
+	ERRHANDLER ErrorReport;
 	char msgbuf [256] = {0};
 
 	// Convert error codes to messages
@@ -22,7 +22,7 @@ void REGEDIT::RegErrorReport (std::string mainFunc, const char* func, LSTATUS er
 	MessageBoxA (NULL, errAlert.c_str (), "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
-void REGEDIT::Initialize (LPCSTR lpwsApplication)
+void REGISTRANT::Initialize (LPCSTR lpwsApplication)
 {
 	sRegKey = std::string ("*\\shell\\") + DEFAULT_REGKEYNAME;
     sRegSubKey = std::string ("*\\shell\\") + DEFAULT_REGKEYNAME + "\\command";
@@ -32,12 +32,12 @@ void REGEDIT::Initialize (LPCSTR lpwsApplication)
     bRightMenu = RegCheckExist ();
 }
 
-bool REGEDIT::GetStatus ()
+bool REGISTRANT::GetStatus ()
 {
 	return bRightMenu;
 }
 
-bool REGEDIT::SetStatus (bool _bRightMenu)
+bool REGISTRANT::SetStatus (bool _bRightMenu)
 {
 	if (bRightMenu == _bRightMenu)
 		return true;
@@ -50,7 +50,7 @@ bool REGEDIT::SetStatus (bool _bRightMenu)
 	return res;
 }
 
-bool REGEDIT::RegCheckExist ()
+bool REGISTRANT::RegCheckExist ()
 {
 	HKEY hKey;
 	
@@ -68,7 +68,7 @@ bool REGEDIT::RegCheckExist ()
 	return true;
 }
 
-bool REGEDIT::RegAdd ()
+bool REGISTRANT::RegAdd ()
 {
 	if (sApplication.empty ())
 		return false;
@@ -129,7 +129,7 @@ bool REGEDIT::RegAdd ()
     return true;
 }
 
-bool REGEDIT::RegDel ()
+bool REGISTRANT::RegDel ()
 {
 	if (!RegCheckExist ())
 		return true;

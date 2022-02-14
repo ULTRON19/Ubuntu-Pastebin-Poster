@@ -6,7 +6,7 @@
 #include <tchar.h>
 
 #include "poster.h"
-#include "regedit.h"
+#include "registrant.h"
 #include "mainfront.h"
 #include "defaultsettings.h"
 
@@ -31,9 +31,9 @@ private:
 	// A function that handles command-line arguments
 	bool GetCmdFilePath (std::wstring& wsFilePath);
 
-	RESMANAGER* pResManager;
+	RESMANAGER* pResourceManager;
 	MAINFRONT* pMainFront;
-	REGEDIT* pRegedit;
+	REGISTRANT* pRegistrant;
 	POSTER* pPoster;
 	
 	// info path

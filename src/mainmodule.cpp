@@ -2,10 +2,10 @@
 
 MAINMODULE::MAINMODULE ()
 {
-	pResManager = RESMANAGER::GetInstance ();
+	pResourceManager = RESMANAGER::GetInstance ();
 	pMainFront = MAINFRONT::GetInstance ();
 	
-	pRegedit = new REGEDIT;
+	pRegistrant = new REGISTRANT;
 	
 	pPoster = POSTER::GetInstance ();
 }
@@ -28,11 +28,11 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	GetModuleFileNameA (NULL, cbuffer, MAX_PATH);
 	
 	// Initialize regedit
-	pRegedit -> Initialize (cbuffer);
+	pRegistrant -> Initialize (cbuffer);
 	
 	// Get the path and initial error reporter
 	_tcsrchr (cbuffer, '\\') [0] = '\0';
-	ERH::sDefaultFilePath = std::string (cbuffer);
+	ERRHANDLER::sDefaultFilePath = std::string (cbuffer);
 	
 	// Set info path
 	sSettingsPath = std::string (cbuffer) + DEFAULT_SETTINGSNAME;
@@ -40,10 +40,10 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	delete [] cbuffer;
 	cbuffer = nullptr;
 	
-	ERH erh;
+	ERRHANDLER erh;
 	
 	// Initialize front
-	if (!pResManager -> Initialize (hInstance))
+	if (!pResourceManager -> Initialize (hInstance))
 		return false;
 	
 	if (!pMainFront -> Initialize ())
@@ -60,13 +60,13 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 		pMainFront -> SetFilePath (wsFilePath);
 	
 	pMainFront -> SetComboBoxItem (lstDefaultSyntax, lstDefaultExpiration);
-	pMainFront -> SetRightMenu (pRegedit -> GetStatus ());
+	pMainFront -> SetRightMenu (pRegistrant -> GetStatus ());
 	
 	// Set callback
 	using namespace std::placeholders;
 	
 	pMainFront -> SetPostCallBack (std::bind (&POSTER::Post, pPoster, _1, _2, _3, _4));
-	pMainFront -> SetRightMenuCallBack (std::bind (&REGEDIT::SetStatus, pRegedit, _1));
+	pMainFront -> SetRightMenuCallBack (std::bind (&REGISTRANT::SetStatus, pRegistrant, _1));
 	
 	pPoster -> SetPostCompleteCallBack (std::bind (&MAINFRONT::PostCompleteHandle, pMainFront, _1));
 	
@@ -75,10 +75,10 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 
 void MAINMODULE::CoInitialize ()
 {
-	if (pRegedit)
+	if (pRegistrant)
 	{
-		delete pRegedit;
-		pRegedit = nullptr;
+		delete pRegistrant;
+		pRegistrant = nullptr;
 	}
 }
 

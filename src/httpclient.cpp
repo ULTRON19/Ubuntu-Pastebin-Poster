@@ -391,7 +391,7 @@ void HTTPCLIENT::ClearBuffer ()
 
 void HTTPCLIENT::HttpErrorReport (std::string mainFunc, const char* func, bool isAlert)
 {
-	ERH ErrorReport;
+	ERRHANDLER ErrorReport;
 	int err = GetLastError ();
 
 	// Improve error reporting

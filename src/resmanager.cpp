@@ -119,7 +119,7 @@ bool RESMANAGER::InitWindow (WINAPP* pWinApp, DWORD dwExStyle, LPCSTR lpClassNam
 	
 	wcex.cbSize			=	sizeof (WNDCLASSEX);
 	wcex.style			=	CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	=	WINAPP::G_WndProc;
+    wcex.lpfnWndProc	=	WINAPP::GlobalWndProc;
     wcex.cbClsExtra		=	0;
     wcex.cbWndExtra		=	sizeof (LONG_PTR);
     wcex.hInstance		=	hInstance;

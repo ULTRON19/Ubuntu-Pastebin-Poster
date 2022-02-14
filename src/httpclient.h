@@ -10,7 +10,7 @@
 #include <functional>
 #include <map>
 #include <queue>
-#include "erh.h"
+#include "errhandler.h"
 
 #define XWWWFORMURLENCODED 0
 #define FORMDATA 1
@@ -57,7 +57,7 @@ public:
 	~HTTPCLIENT ();
 		
 private:
-	// Autocomplete GetLastError and submit to ERH
+	// Autocomplete GetLastError and submit to ERRHANDLER
 	static void HttpErrorReport (std::string mainFunc, const char* func, bool isAlert);
 	
 	// CallBack function

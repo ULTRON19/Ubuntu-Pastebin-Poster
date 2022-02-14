@@ -2,10 +2,10 @@
 #define __WINAPP__
 
 #include <functional>
-#include "erh.h"
+#include "errhandler.h"
 
-#define Screen_FullWidth	GetSystemMetrics (SM_CXSCREEN)
-#define Screen_FullHeight	GetSystemMetrics (SM_CYSCREEN)
+#define Screen_FullWidth	(GetSystemMetrics (SM_CXSCREEN))
+#define Screen_FullHeight	(GetSystemMetrics (SM_CYSCREEN))
 
 // This structure is used for 'CreateWindowA' function, its memeber 
 // correspond to the parameters of the 'CreateWindow' function
@@ -28,11 +28,11 @@ struct WNDSTYLEEXA
 class WINAPP
 {
 public:
-	// Autocomplete GetLastError and submit to ERH
+	// Autocomplete GetLastError and submit to ERRHANDLER
 	static void WinErrorReport (std::string mainFunc, const char* func, bool isAlert = false);
 	
 	// Global message queue
-	static LRESULT CALLBACK G_WndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK GlobalWndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 	// Initialize window
 	LPCSTR InitializeWindow (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, std::function <void (HWND)> _MainLoop = nullptr);
@@ -43,7 +43,7 @@ public:
 	WINAPP ();
 private:
 	// Window Handle
-	HWND m_hwnd;
+	HWND hwnd;
 
 	// Individual message queue
 	std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> WndProc;
