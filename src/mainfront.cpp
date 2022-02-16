@@ -13,10 +13,10 @@ bool MAINFRONT::Initialize ()
 {
 	using namespace std::placeholders;
 
-	RESMANAGER* front = RESMANAGER::GetInstance ();
+	RESMANAGER* pResManager = RESMANAGER::GetInstance ();
 	
 	// Initialize window
-	if (!front -> InitWindow (&mainApp, WS_EX_CLIENTEDGE | WS_EX_ACCEPTFILES,
+	if (!pResManager -> InitWindow (&mainApp, WS_EX_CLIENTEDGE | WS_EX_ACCEPTFILES,
 		"MainApp", "Ubuntu Pastebin Poster",
 		WS_VISIBLE | (WS_OVERLAPPEDWINDOW ^ WS_MAXIMIZEBOX ^ WS_THICKFRAME),
 		CLIENT_FULLWIDTH, CLIENT_FULLHEIGHT, nullptr, nullptr, 
@@ -26,69 +26,133 @@ bool MAINFRONT::Initialize ()
 	HWND hwnd = mainApp.GetHWND ();
 	
 	// Initialize static control
-	if (!front -> InitControl (hstcPoster, WC_STATICA, "Poster:", DEFAULT_SSTATIC, 
+	if (!pResManager -> InitControl (hstcPoster, WC_STATICA, "Poster:", DEFAULT_SSTATIC, 
 		20, 10, 80, 25, hwnd, INDEX_STCPOSTER, FONT_UBUNTU, 0))
 		return false;
 		
-	if (!front -> InitControl (hstcSyntax, WC_STATICA, "Syntax:", DEFAULT_SSTATIC,
+	if (!pResManager -> InitControl (hstcSyntax, WC_STATICA, "Syntax:", DEFAULT_SSTATIC,
 		190, 10, 80, 25, hwnd, INDEX_STCSYNTAX, FONT_UBUNTU, 0))
 		return false;
 		
-	if (!front -> InitControl (hstcExpiration, WC_STATICA, "Expiration:", DEFAULT_SSTATIC,
+	if (!pResManager -> InitControl (hstcExpiration, WC_STATICA, "Expiration:", DEFAULT_SSTATIC,
 		360, 10, 80, 25, hwnd, INDEX_STCEXPIRATION, FONT_UBUNTU, 0))
 		return false;
 		
-	if (!front -> InitControl (hstcFilePath, WC_STATICA, "File path:", DEFAULT_SSTATIC,
+	if (!pResManager -> InitControl (hstcFilePath, WC_STATICA, "File path:", DEFAULT_SSTATIC,
 		20, 83, 80, 25, hwnd, INDEX_STCFILEPATH, FONT_UBUNTU, 0))
 		return false;
 		
-	if (!front -> InitControl (hstcURL, WC_STATICA, "URL:", DEFAULT_SSTATIC, 
+	if (!pResManager -> InitControl (hstcURL, WC_STATICA, "URL:", DEFAULT_SSTATIC, 
 		35, 128, 80, 25, hwnd, INDEX_STCURL, FONT_UBUNTU, 0))
 		return false;
 	
 	// Initialize edit control
-	if (!front -> InitControl (hedtPoster, WC_EDITA, "", DEFAULT_SEDIT, 
+	if (!pResManager -> InitControl (hedtPoster, WC_EDITA, "", DEFAULT_SEDIT, 
 		20, 35, 155, 30, hwnd, INDEX_EDTPOSTER, FONT_UBUNTU, CURSOR_IBEAM))
 		return false;
 		
-	if (!front -> InitControl (hedtFilePath, WC_EDITA, "", DEFAULT_SEDIT | ES_READONLY, 
+	if (!pResManager -> InitControl (hedtFilePath, WC_EDITA, "", DEFAULT_SEDIT | ES_READONLY, 
 		105, 80, 285, 30, hwnd, INDEX_EDTFILEPATH, FONT_UBUNTU, CURSOR_IBEAM))
 		return false;
 		
-	if (!front -> InitControl (hedtURL, WC_EDITA, "", DEFAULT_SEDIT | ES_READONLY, 
+	if (!pResManager -> InitControl (hedtURL, WC_EDITA, "", DEFAULT_SEDIT | ES_READONLY, 
 		105, 125, 285, 30, hwnd, INDEX_EDTURL, FONT_UBUNTU, CURSOR_IBEAM))
 		return false;
 		
 	// Initialize combo Box control
-	if (!front -> InitControl (hcbxSyntax, WC_COMBOBOXA, "", DEFAULT_SCOMBOBOX | CBS_NOINTEGRALHEIGHT, 
+	if (!pResManager -> InitControl (hcbxSyntax, WC_COMBOBOXA, "", DEFAULT_SCOMBOBOX | CBS_NOINTEGRALHEIGHT, 
 		190, 35, 155, 300, hwnd, INDEX_CBXSYNTAX, FONT_UBUNTU, CURSOR_UPARROW))
 		return false;
 		
-	if (!front -> InitControl (hcbxExpiration, WC_COMBOBOXA, "", DEFAULT_SCOMBOBOX, 
+	if (!pResManager -> InitControl (hcbxExpiration, WC_COMBOBOXA, "", DEFAULT_SCOMBOBOX, 
 		360, 35, 155, 50, hwnd, INDEX_CBXEXPIRATION, FONT_UBUNTU, CURSOR_UPARROW))
 		return false;
 	
 	// Initialize button control
-	if (!front -> InitControl (hbtnPost, WC_BUTTONA, "Post", DEFAULT_SBUTTON,
+	if (!pResManager -> InitControl (hbtnPost, WC_BUTTONA, "Post", DEFAULT_SBUTTON,
 		410, 80, 100, 75, hwnd, INDEX_BTNPOST, FONT_UBUNTU, CURSOR_UPARROW))
 		return false;
 		
-	if (!front -> InitControl (hbtnRightMenu, WC_BUTTONA, "Add to the right-mouse menu (Administrator privileges required)", 
+	if (!pResManager -> InitControl (hbtnRightMenu, WC_BUTTONA, "Add to the right-mouse menu (Administrator privileges required)", 
 		WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 30, 165, 500, 25, hwnd, INDEX_BTNRIGHTMENU, FONT_UBUNTU, CURSOR_UPARROW))
 		return false;
-	
+		
+	SetBoxItem ();
 	return true;
 }
 
-void MAINFRONT::SetComboBoxItem (LSTPSS& vctSyntax, LSTPSS& vctExpiration)
+void MAINFRONT::SetBoxItem ()
 {
-	AddComboBoxItem (hcbxSyntax, cbiSyntax, vctSyntax);
-	AddComboBoxItem (hcbxExpiration, cbiExpiration, vctExpiration);
+	INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
+	
+	const std::vector <SYNTAXITEM>& vSyntaxList = pIniManager -> GetSyntaxList ();
+	const std::vector <EXPIRATIONITEM>& vExpirationList = pIniManager -> GetExpirationList ();
+	
+	SetWindowTextA (hedtPoster, pIniManager -> GetPosterName ().c_str ());
+	
+	SendMessage (hcbxSyntax, CB_RESETCONTENT, 0, 0);
+	
+	for (const SYNTAXITEM& item: vSyntaxList)
+		SendMessage (hcbxSyntax, CB_ADDSTRING, 0, (LPARAM) item.GetName ().c_str ());
+	
+	SendMessage (hcbxSyntax, CB_SETCURSEL, 0, 0);
+		
+	SendMessage (hcbxExpiration, CB_RESETCONTENT, 0, 0);
+	
+	for (const EXPIRATIONITEM& item: vExpirationList)
+		SendMessage (hcbxExpiration, CB_ADDSTRING, 0, (LPARAM) item.GetName ().c_str ());
+		
+	SendMessage (hcbxExpiration, CB_SETCURSEL, 0, 0);
 }
 
-void MAINFRONT::SetFilePath (const std::wstring& sFilePath)
+void MAINFRONT::UpdateIni (std::string sSuffix)
 {
-	SetWindowTextW (hedtFilePath, sFilePath.c_str ());
+	INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
+	pIniManager -> UpdateSyntaxList (sSuffix);
+}
+
+void MAINFRONT::UpdateIni (std::string sPoster, unsigned int uiSyntax, unsigned int uiExpiration)
+{
+	INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
+	
+	pIniManager -> UpdatePosterName (sPoster);
+	pIniManager -> UpdateSyntaxList (uiSyntax);
+	pIniManager -> UpdateExpirationList (uiExpiration);
+}
+
+void MAINFRONT::SetFilePath (std::string sFilePath)
+{
+	SetWindowTextA (hedtFilePath, sFilePath.c_str ());
+	
+	std::string::size_type pos = sFilePath.find_last_of ('.');
+	
+	if (pos == (unsigned int) -1)
+		return UpdateIni ("");
+	
+	UpdateIni (sFilePath.substr (pos + 1));
+	SetBoxItem ();
+}
+
+void MAINFRONT::SetFilePath (std::wstring wsFilePath)
+{
+	int len = WideCharToMultiByte (CP_ACP, 0, wsFilePath.c_str (), (int) wsFilePath.size (), NULL, 0, NULL, NULL);
+
+	char* pcBuffer = new char [(long long) len + 1];
+	
+	if (!WideCharToMultiByte (CP_ACP, 0, wsFilePath.c_str (), (int) wsFilePath.size (), pcBuffer, len, NULL, NULL))
+	{
+		SetWindowTextW (hedtFilePath, wsFilePath.c_str ());
+		
+		delete [] pcBuffer;
+		return;
+	}
+	
+	pcBuffer [len] = '\0';
+	
+	std::string sFilePath (pcBuffer);
+	delete [] pcBuffer;
+	
+	SetFilePath (sFilePath);
 }
 
 void MAINFRONT::SetRightMenu (bool bRightMenu)
@@ -120,6 +184,9 @@ void MAINFRONT::PostCompleteHandle (std::wstring wsURL)
 	
 	if (!wsURL.empty ())
 		SetWindowTextW (hedtURL, wsURL.c_str ());
+	else
+		MessageBoxA (NULL, "An error has occurred when sending request", 
+			"Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
 void MAINFRONT::SetRightMenuCallBack (std::function <bool (bool)> cbRightMenu)
@@ -140,17 +207,6 @@ int MAINFRONT::EnterLoop ()
 	return res;
 }
 
-void MAINFRONT::AddComboBoxItem (HWND& hControl, COMBOBOX_ITEM& cbiControl, LSTPSS& lstControl)
-{
-	for (auto& pir: lstControl)
-	{
-		cbiControl [pir.first] = pir.second;
-		SendMessage (hControl, CB_ADDSTRING, -1, (LPARAM) pir.first.c_str ());
-	}
-	
-	SendMessage (hControl, CB_SETCURSEL, 0, 0);
-}
-
 LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message)
@@ -164,17 +220,21 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 					{
 						case EN_CHANGE:
 						{
-							char* cbuffer = new char [MAX_PATHLEN];
-							GetWindowTextA (hedtPoster, cbuffer, MAX_CHARACTER + 5);
+							char* pcBuffer = new char [MAX_PATHLEN];
+							INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
+							
+							GetWindowTextA (hedtPoster, pcBuffer, MAX_CHARACTER + 5);
 
-							if (lstrlenA (cbuffer) > MAX_CHARACTER)
+							if (lstrlenA (pcBuffer) > MAX_CHARACTER)
 							{
-								cbuffer [MAX_CHARACTER] = 0;
-								SetWindowTextA (hedtPoster, cbuffer);
+								pcBuffer [MAX_CHARACTER] = 0;
+								SetWindowTextA (hedtPoster, pcBuffer);
 								SendMessageA (hedtPoster, EM_SETSEL, 0, -1);
 							}
+							
+							pIniManager -> UpdatePosterName (pcBuffer);
 
-							delete [] cbuffer;
+							delete [] pcBuffer;
 							break;
 						}
 
@@ -194,7 +254,7 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 							
 							// If it is a valid file, update 'File path' box
 							if (GetChooseFilePath (sFilePath))
-								SetWindowTextA (hedtFilePath, sFilePath.c_str ());
+								SetFilePath (sFilePath);
 							
 							break;
 						}
@@ -239,12 +299,14 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
             		if (postCallBack == nullptr)
             			break;
 					
-					RESMANAGER* front = RESMANAGER::GetInstance ();
-					std::string sPoster, sSyntax, sExpiration, sFilePath;
+					RESMANAGER* pResManager = RESMANAGER::GetInstance ();
+					INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
+					unsigned int uiSyntax, uiExpiration;
+					std::string sPoster, sFilePath;
 					std::wstring wsUrl;
 					
 					// Collect form
-					if (!CollectForm (sPoster, sSyntax, sExpiration, sFilePath))
+					if (!CollectForm (sPoster, uiSyntax, uiExpiration, sFilePath))
 						break;
 					
 					// Disable all controls when posting
@@ -256,18 +318,19 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 					// Change the cursor state
 #if defined (_M_X64) || defined (__amd64__)
 					SetClassLongPtr (mainApp.GetHWND (), GCLP_HCURSOR, 
-						(LONG_PTR) reinterpret_cast <long long> (front -> GetCursorHandle (CURSOR_WAIT)));
+						(LONG_PTR) reinterpret_cast <long long> (pResManager -> GetCursorHandle (CURSOR_WAIT)));
 #else
 					SetClassLongPtr (mainApp.GetHWND (), GCL_HCURSOR, 
-						(LONG_PTR) front -> GetCursorHandle (CURSOR_WAIT));
+						(LONG_PTR) pResManager -> GetCursorHandle (CURSOR_WAIT));
 #endif	
 
-					if (!postCallBack (sPoster, sSyntax, sExpiration, sFilePath))
-					{
-						MessageBoxA (mainApp.GetHWND (), "Post failed!", "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+					if (!postCallBack (sPoster, 
+						(pIniManager -> GetSyntaxList () [uiSyntax]).GetKey (), 
+						(pIniManager -> GetExpirationList () [uiExpiration]).GetKey (), 
+						sFilePath))
 						PostCompleteHandle (L"");
-					}
 					
+					UpdateIni (sPoster, uiSyntax, uiExpiration);
             		break;  		
 				}
 				
@@ -282,7 +345,7 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 			std::string sFilePath;
 			
 			if (GetDropFilePath (sFilePath, (HDROP) wParam))
-				SetWindowText (hedtFilePath, sFilePath.c_str ());
+				SetFilePath (sFilePath);
 				
 			break;
 		}
@@ -326,7 +389,7 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 	return 0;
 }
 
-bool MAINFRONT::CollectForm (std::string& sPoster, std::string& sSyntax, std::string& sExpiration, std::string& sFilePath)
+bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsigned int& uiExpiration, std::string& sFilePath)
 {
 	char* cbuffer = new char [MAX_PATHLEN];
 	
@@ -342,13 +405,15 @@ bool MAINFRONT::CollectForm (std::string& sPoster, std::string& sSyntax, std::st
 		return false;
 	}
 	
-	// Replace with the fields required for the post request				
-	GetWindowTextA (hcbxSyntax, cbuffer, MAX_CHARACTER); 
-	sSyntax = cbiSyntax [std::string ((const char* ) cbuffer)];
+	LRESULT lres;
 	
-	// Replace with the fields required for the post request
-	GetWindowTextA (hcbxExpiration, cbuffer, MAX_CHARACTER); 
-	sExpiration = cbiExpiration [std::string ((const char*) cbuffer)];
+	// Get the index of syntax item				
+	lres = SendMessage (hcbxSyntax, CB_GETCURSEL, 0, 0); 
+	uiSyntax = (unsigned int) lres;
+	
+	// Get the index of expiration item				
+	lres = SendMessage (hcbxExpiration, CB_GETCURSEL, 0, 0); 
+	uiExpiration = (unsigned int) lres;
 					
 	GetWindowTextA (hedtFilePath, cbuffer, MAX_PATHLEN); 
 	sFilePath = std::string ((const char*) cbuffer);

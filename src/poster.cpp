@@ -177,9 +177,6 @@ void POSTER::WinHttpPostCallBack (bool isSuccess)
 		}
 	}
 	
-	MessageBoxA (NULL, "An error has occurred when sending request", 
-		"Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-		
 	if (postcompleteCallBack)	
 		postcompleteCallBack (L"");	
 }

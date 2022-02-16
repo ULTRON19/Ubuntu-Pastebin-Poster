@@ -28,9 +28,9 @@ bool WINRES::Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
 	return true;
 }
 
-bool WINRES::ExtractToLocal (LPCWSTR lpFileName)
+bool WINRES::ExtractToLocal (LPCSTR lpFileName)
 {
-	HANDLE hFile = CreateFileW (lpFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
+	HANDLE hFile = CreateFileA (lpFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
 	
 	if (hFile == INVALID_HANDLE_VALUE)
 		return WINAPP::WinErrorReport (__FUNCTION__, "CreateFileW", true), false;
@@ -86,7 +86,6 @@ void WINFONT::CoUninitialize ()
 {
 	UninstallFont ();
 	DestroyFontHandle ();
-	WINRES::CoInitialize ();
 }
 
 bool WINFONT::InstallFont (HINSTANCE hInstance, LPCWSTR _resId)

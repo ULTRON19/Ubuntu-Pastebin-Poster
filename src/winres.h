@@ -20,7 +20,7 @@ public:
 	void CoInitialize ();
 	
 	// Write resource to local file
-	bool ExtractToLocal (LPCWSTR lpFileName);
+	bool ExtractToLocal (LPCSTR lpFileName);
 	
 	WINRES ();
 	~WINRES ();
@@ -30,7 +30,7 @@ protected:
 	DWORD dwSize;	
 };
 
-class WINFONT: WINRES
+class WINFONT: private WINRES
 {
 public:
 	// Extract font from resource, install it and create the handle

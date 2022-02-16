@@ -3,6 +3,7 @@
 MAINMODULE::MAINMODULE ()
 {
 	pResourceManager = RESMANAGER::GetInstance ();
+	pIniManager = INIMANAGER::GetInstance ();
 	pMainFront = MAINFRONT::GetInstance ();
 	pRegistrant = new REGISTRANT;
 	pPoster = POSTER::GetInstance ();
@@ -38,6 +39,10 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	if (!pResourceManager -> Initialize (hInstance))
 		return false;
 		
+	// Initialize ini
+	if (!pIniManager -> Initialize (sFolderPath))
+		return false;
+		
 	// Initialize poster
 	if (!pPoster -> Initialize ())
 		return false;
@@ -51,7 +56,7 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	if (GetCmdFilePath (wsFilePath))
 		pMainFront -> SetFilePath (wsFilePath);
 	
-	pMainFront -> SetComboBoxItem (lstDefaultSyntax, lstDefaultExpiration);
+//	pMainFront -> SetComboBoxItem (lstDefaultSyntax, lstDefaultExpiration);
 	pMainFront -> SetRightMenu (pRegistrant -> GetStatus ());
 	
 	// Set callback
@@ -67,6 +72,8 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 
 void MAINMODULE::CoInitialize ()
 {
+	pIniManager -> Save ();
+	
 	if (pRegistrant)
 	{
 		delete pRegistrant;

@@ -52,7 +52,7 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 		res = false;
 	}
 	
-	hcWait = LoadCursorA (hInstance, MAKEINTRESOURCE (CURSOR_WAIT));
+	hcWait = LoadCursorA (hInstance, MAKEINTRESOURCEA (CURSOR_WAIT));
 	if (hcWait == nullptr)
 	{
 		WINAPP::WinErrorReport (__FUNCTION__, "LoadCursorA", false);
@@ -60,6 +60,9 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 	}
 	
 	if (!rfUbuntu.Initialize (hInstance, L"Ubuntu", MAKEINTRESOURCEW (FONT_UBUNTU), 20, FW_DONTCARE, false, false, false))
+		res = false;
+		
+	if (!rConfiguration.Initialize (hInstance, MAKEINTRESOURCEW (INI_CONFIGURATION), L"INI"))
 		res = false;
 		
 	return res;
@@ -73,6 +76,7 @@ void RESMANAGER::CoInitialize ()
 	SAFE_DELETE_OBJ (hcUpArrow);
 	SAFE_DELETE_OBJ (hcWait);
 	rfUbuntu.CoUninitialize ();
+	rConfiguration.CoInitialize ();
 }
 
 HICON RESMANAGER::GetIconHandle (DWORD dwIndex)
@@ -103,6 +107,16 @@ HFONT RESMANAGER::GetFontHandle (DWORD dwIndex)
 	switch (dwIndex)
 	{
 		case FONT_UBUNTU:		return rfUbuntu.GetFontHandle ();
+	}
+	
+	return nullptr;
+}
+
+WINRES* RESMANAGER::GetResourcePointer (DWORD dwIndex)
+{
+	switch (dwIndex)
+	{
+		case INI_CONFIGURATION:	return &rConfiguration;
 	}
 	
 	return nullptr;

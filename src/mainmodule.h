@@ -6,7 +6,6 @@
 #include "poster.h"
 #include "registrant.h"
 #include "mainfront.h"
-#include "defaultsettings.h"
 
 class MAINMODULE
 {
@@ -30,6 +29,7 @@ private:
 	bool GetCmdFilePath (std::wstring& wsFilePath);
 
 	RESMANAGER* pResourceManager;
+	INIMANAGER* pIniManager;
 	MAINFRONT* pMainFront;
 	REGISTRANT* pRegistrant;
 	POSTER* pPoster;

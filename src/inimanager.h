@@ -1,18 +1,45 @@
-#ifndef __DEFAULTSETTINGS__
-#define __DEFAULTSETTINGS__
+#ifndef __INIMANAGER__
+#define __INIMANAGER__
 
-#include <set>
-#include <string>
+#define DEFAULT_ININAME		"\\configuration.ini"
 
-static std::initializer_list <std::pair <std::string, std::string>> lstDefaultExpiration =
+#include <algorithm>
+
+#include "comboboxitem.h"
+#include "resmanager.h"
+
+class INIMANAGER
 {
-	{"A day", "day"}, 
-	{"A week", "week"}, 
-	{"A month", "month"}, 
-	{"A year", "year"}
+public:
+	static INIMANAGER* GetInstance ();
+	
+	bool Initialize (std::string sFolderPath);
+	bool Save ();
+	
+	std::string GetPosterName () const;
+	const std::vector <SYNTAXITEM>& GetSyntaxList () const;
+	const std::vector <EXPIRATIONITEM>& GetExpirationList () const;
+	
+	void UpdatePosterName (std::string _sPosterName);
+	void UpdateSyntaxList (std::string sSuffix);
+	bool UpdateSyntaxList (unsigned int idx);
+	bool UpdateExpirationList (unsigned int idx);
+
+private:
+	INIMANAGER () = default;
+	
+	bool ExtractIniFromResource ();
+	bool LoadPosterNameFromIni ();
+	bool SavePosterNameToIni ();
+	
+	std::string sPosterName;
+	std::vector <SYNTAXITEM> vSyntaxList;
+	std::vector <EXPIRATIONITEM> vExpirationList;
+
+	std::string sFileName;
 };
 
-static std::initializer_list <std::pair <std::string, std::string>> lstDefaultSyntax =
+static const std::initializer_list <std::pair <std::string, std::string>> psSyntaxPairList =
 {
 	{"Plain Text", "text"}, 
 	{"ABAP", "abap"}, 
@@ -448,6 +475,14 @@ static std::initializer_list <std::pair <std::string, std::string>> lstDefaultSy
 	{"YAML", "yaml"}, 
 	{"YAML+Jinja", "yaml+jinja"}, 
 	{"Zephir", "zephir"} 
+};
+
+static const std::initializer_list <std::pair <std::string, std::string>> psExpirationPairList =
+{
+	{"A day", "day"}, 
+	{"A week", "week"}, 
+	{"A month", "month"}, 
+	{"A year", "year"}
 };
 
 #endif

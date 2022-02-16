@@ -3,10 +3,8 @@
 
 #include <vector>
 
+#include "inimanager.h"
 #include "resmanager.h"
-
-typedef std::initializer_list <std::pair <std::string, std::string>> LSTPSS;
-typedef std::unordered_map <std::string, std::string> COMBOBOX_ITEM;
 
 class MAINFRONT
 {
@@ -18,8 +16,8 @@ public:
 	bool Initialize ();
 	
 	// Set option for control
-	void SetComboBoxItem (LSTPSS& vctSyntax, LSTPSS& vctExpiration);
-	void SetFilePath (const std::wstring& wsFilePath);
+	void SetFilePath (std::string sFilePath);
+	void SetFilePath (std::wstring wsFilePath);
 	void SetRightMenu (bool bRightMenu);
 	
 	// Post complete callback handler
@@ -38,9 +36,14 @@ private:
 	// Window procedure
 	LRESULT proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	
+	// Update ini
+	void UpdateIni (std::string sSuffix);
+	void UpdateIni (std::string sPoster, unsigned int uiSyntax, unsigned int uiExpiration);
+	
 	// Functions about controls
-	void AddComboBoxItem (HWND& hControl, COMBOBOX_ITEM& cbiControl, LSTPSS& vctControl);
-	bool CollectForm (std::string& sPoster, std::string& sSyntax, std::string& sExpiration, std::string& sFilePath);
+	void SetBoxItem ();
+	bool CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsigned int& uiExpiration, std::string& sFilePath);
+	
 	bool GetChooseFilePath (std::string& sFilePath);
 	bool GetDropFilePath (std::string& sFilePath, HDROP hDropInfo);
 	
@@ -59,9 +62,6 @@ private:
 	HWND hcbxSyntax, hcbxExpiration;
 	// Button control handle
 	HWND hbtnPost, hbtnRightMenu;
-	
-	// Combo box item
-	COMBOBOX_ITEM cbiSyntax, cbiExpiration;
 	
 	// Callback
 	std::function <bool (std::string, std::string, std::string, std::string)> postCallBack;
