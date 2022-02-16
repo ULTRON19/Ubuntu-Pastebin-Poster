@@ -93,7 +93,6 @@ bool SYNTAXITEM::LoadFromIni (std::string sFilePath)
 		while (pcbuffer [++ i] != '\0')
 			if (pcbuffer [i] == '.')
 			{
-				sSuffix.append (1, '\0');
 				vsSuffixList.push_back (sSuffix);
 				sSuffix.clear ();
 			}
