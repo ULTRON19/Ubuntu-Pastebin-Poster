@@ -129,7 +129,10 @@ void MAINFRONT::SetFilePath (std::string sFilePath)
 	if (pos == (unsigned int) -1)
 		return UpdateIni ("");
 	
-	UpdateIni (sFilePath.substr (pos + 1));
+	std::string sSuffix (sFilePath.substr (pos + 1));
+	std::transform (sSuffix.begin (), sSuffix.end (), sSuffix.begin (), ::tolower);
+	UpdateIni (sSuffix);
+	
 	SetBoxItem ();
 }
 
