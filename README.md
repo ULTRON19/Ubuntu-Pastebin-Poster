@@ -26,7 +26,7 @@ Do not use this program to automatically send data to the site. Its purpose is s
 
 ## Configuration
 ### setup.ini
-After the program is run for the first time, a setup.ini file is generated in the program's directory. It records the last Poster name used (The first run is Windows username), the file extensions corresponding to each programming language, and the user's usage preference. It is generally not recommended to modify this file manually, and if you have to do so, please remember that section and key names cannot be modified. The various key-value pairs are described below. If you want to restore the default Settings, delete this file.
+After the program is run for the first time, a setup.ini file is generated in the program's directory. It records the last Poster name used (The first run is Windows username), the file extensions corresponding to each programming language, and the user's usage preference. It is generally not recommended to modify this file manually, and if you have to do so, please remember that section and key names cannot be modified. If you want to restore the default Settings, delete this file. The various key-value pairs are described below.
 #### name
 This key appears only in the Poster section. The key value is a string of up to 30 characters. It records the last Poster name used.
 #### suffix
