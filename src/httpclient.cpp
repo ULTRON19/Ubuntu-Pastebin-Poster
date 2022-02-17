@@ -18,8 +18,6 @@ HTTPCLIENT::~HTTPCLIENT ()
 		pszOutBuffer = nullptr;
 	}
 	
-	RemoveRequestCallBack ();
-	
 	CloseRequest ();
 	CloseConnect ();
 	CloseHttp ();
@@ -373,6 +371,8 @@ bool HTTPCLIENT::CloseRequest ()
 	if (!hRequest)
 		return true;
 	
+	RemoveRequestCallBack ();
+
 	if (!WinHttpCloseHandle (hRequest))
 		return HttpErrorReport (__FUNCTION__, "WinHttpCloseHandle", false), false;
 	

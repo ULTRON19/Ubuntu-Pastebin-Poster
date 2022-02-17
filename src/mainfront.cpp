@@ -178,6 +178,9 @@ void MAINFRONT::PostCompleteHandle (std::wstring wsURL)
 	SetClassLongPtr (mainApp.GetHWND (), GCL_HCURSOR, 
 		(LONG_PTR) (RESMANAGER::GetInstance () -> GetCursorHandle (CURSOR_ARROW)));
 #endif	
+
+	if (!wsURL.empty ())
+		CopyURLToClipboard (wsURL);
 	
 	// Enable all controls when post complete
 	EnableAllControls ();
@@ -188,8 +191,7 @@ void MAINFRONT::PostCompleteHandle (std::wstring wsURL)
 	if (!wsURL.empty ())
 		SetWindowTextW (hedtURL, wsURL.c_str ());
 	else
-		MessageBoxA (NULL, "An error has occurred when sending request", 
-			"Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		MessageBoxA (NULL, "Post failed!", "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
 void MAINFRONT::SetRightMenuCallBack (std::function <bool (bool)> cbRightMenu)
@@ -444,6 +446,40 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 	}
 	
 	delete [] cbuffer;
+	return true;
+}
+
+bool MAINFRONT::CopyURLToClipboard (std::wstring wsURL)
+{
+	if (wsURL.empty () || !OpenClipboard (nullptr))
+		return false;
+
+	EmptyClipboard ();
+
+	size_t sLen = wsURL.size ();
+	HGLOBAL hGolCopy = GlobalAlloc (GMEM_MOVEABLE, (sLen + 1) * sizeof (wchar_t));
+	
+	if (!hGolCopy)
+	{
+		CloseClipboard ();
+		return false;
+	}
+	
+	LPWSTR lpStrcpy = (LPWSTR) GlobalLock (hGolCopy);
+
+	if (lpStrcpy == nullptr)
+	{
+		CloseClipboard ();
+		return false;
+	}
+
+	memcpy (lpStrcpy, wsURL.c_str (), sLen * sizeof (wchar_t));
+	lpStrcpy [sLen] = 0;
+	
+	GlobalUnlock (hGolCopy);
+	SetClipboardData (CF_UNICODETEXT, hGolCopy);
+	
+	CloseClipboard ();
 	return true;
 }
 

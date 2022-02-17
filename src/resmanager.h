@@ -22,7 +22,7 @@
 
 #define FONT_UBUNTU				0x31
 
-#define INI_CONFIGURATION		0x41
+#define INI_SETUP				0x41
 
 // control index
 #define INDEX_STCPOSTER			1001
@@ -90,7 +90,7 @@ private:
 	// ICON
 	HICON hiUbuntu;
 	// Ini
-	WINRES rConfiguration;
+	WINRES rSetup;
 	
 	// Instance handle
 	HINSTANCE hInstance;

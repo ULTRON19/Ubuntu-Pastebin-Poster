@@ -62,7 +62,7 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 	if (!rfUbuntu.Initialize (hInstance, L"Ubuntu", MAKEINTRESOURCEW (FONT_UBUNTU), 20, FW_DONTCARE, false, false, false))
 		res = false;
 		
-	if (!rConfiguration.Initialize (hInstance, MAKEINTRESOURCEW (INI_CONFIGURATION), L"INI"))
+	if (!rSetup.Initialize (hInstance, MAKEINTRESOURCEW (INI_SETUP), L"INI"))
 		res = false;
 		
 	return res;
@@ -76,7 +76,7 @@ void RESMANAGER::CoInitialize ()
 	SAFE_DELETE_OBJ (hcUpArrow);
 	SAFE_DELETE_OBJ (hcWait);
 	rfUbuntu.CoUninitialize ();
-	rConfiguration.CoInitialize ();
+	rSetup.CoInitialize ();
 }
 
 HICON RESMANAGER::GetIconHandle (DWORD dwIndex)
@@ -116,7 +116,7 @@ WINRES* RESMANAGER::GetResourcePointer (DWORD dwIndex)
 {
 	switch (dwIndex)
 	{
-		case INI_CONFIGURATION:	return &rConfiguration;
+		case INI_SETUP:			return &rSetup;
 	}
 	
 	return nullptr;

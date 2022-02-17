@@ -110,8 +110,8 @@ bool INIMANAGER::UpdateExpirationList (unsigned int idx)
 bool INIMANAGER::ExtractIniFromResource ()
 {
 	RESMANAGER* pResManager = RESMANAGER::GetInstance ();
-	WINRES* prConfiguration = pResManager -> GetResourcePointer (INI_CONFIGURATION);
-	return prConfiguration -> ExtractToLocal (sFileName.c_str ());
+	WINRES* prSetup = pResManager -> GetResourcePointer (INI_SETUP);
+	return prSetup -> ExtractToLocal (sFileName.c_str ());
 }
 
 bool INIMANAGER::LoadPosterNameFromIni ()

@@ -44,6 +44,8 @@ private:
 	void SetBoxItem ();
 	bool CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsigned int& uiExpiration, std::string& sFilePath);
 	
+	bool CopyURLToClipboard (std::wstring wsURL);
+	
 	bool GetChooseFilePath (std::string& sFilePath);
 	bool GetDropFilePath (std::string& sFilePath, HDROP hDropInfo);
 	

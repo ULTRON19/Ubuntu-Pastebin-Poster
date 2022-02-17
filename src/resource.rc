@@ -9,4 +9,4 @@
 
 0x31 FONT		".\\res\\font\\ubuntu_regular.ttf"
 
-0x41 INI		".\\res\\ini\\configuration.ini"
+0x41 INI		".\\res\\ini\\setup.ini"

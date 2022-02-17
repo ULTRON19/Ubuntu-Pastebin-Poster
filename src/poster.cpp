@@ -78,7 +78,23 @@ void POSTER::WinHttpStatusCallBack (DWORD dwInternetStatus, LPVOID lpvStatusInfo
 
 bool POSTER::Post (std::string sPoster, std::string sSyntax, std::string sExpiration, std::string sFilePath)
 {   	
-    std::string sFile;
+    if (!pHttpClient -> OpenRequest (L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
+		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE))
+		return false;
+		
+	if (!pHttpClient -> SetOption (WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS))
+		return false;
+		
+	if (!pHttpClient -> AddHeader ({
+		{L"Content-type", L"multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW"}
+		}, WINHTTP_ADDREQ_FLAG_ADD))
+		return false;
+		
+	// Set callback
+	using namespace std::placeholders;
+	pHttpClient -> SetRequestCallBack (std::bind (&POSTER::WinHttpStatusCallBack, this, _1, _2, _3));
+		
+	std::string sFile;
     if (!LoadFile (sFilePath, sFile))
     	return false;
     
@@ -110,22 +126,6 @@ bool POSTER::Initialize ()
 	if (!pHttpClient -> ConnectHttp (PASTE_SERVER, INTERNET_DEFAULT_HTTPS_PORT))
 		return false;
 		
-	if (!pHttpClient -> OpenRequest (L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
-		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE))
-		return false;
-		
-	if (!pHttpClient -> SetOption (WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS))
-		return false;
-		
-	if (!pHttpClient -> AddHeader ({
-		{L"Content-type", L"multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW"}
-		}, WINHTTP_ADDREQ_FLAG_ADD))
-		return false;
-		
-	// Set callback
-	using namespace std::placeholders;
-	pHttpClient -> SetRequestCallBack (std::bind (&POSTER::WinHttpStatusCallBack, this, _1, _2, _3));
-		
 	return true;
 }
 
@@ -144,7 +144,7 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 	if (!~_access (sFilePath.c_str (), 4))
 		return ERRHANDLER () ("LoadFile", "Invalid file path", true), false;
 	
-	std::fstream file (sFilePath, std::ios::in | std::ios::binary);
+	std::fstream file (sFilePath);
 	
 	if (!file.good ())
 		return ERRHANDLER () ("LoadFile", "Cannot open file", true), false;
@@ -172,11 +172,14 @@ void POSTER::WinHttpPostCallBack (bool isSuccess)
 			
 			if (postcompleteCallBack)	
 				postcompleteCallBack (wsURL);
-				
+
+			pHttpClient -> CloseRequest ();
 			return;
 		}
 	}
 	
 	if (postcompleteCallBack)	
-		postcompleteCallBack (L"");	
+		postcompleteCallBack (L"");
+
+	pHttpClient -> CloseRequest ();
 }
