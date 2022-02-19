@@ -444,20 +444,34 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 				case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:
 				case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
 				{
-					std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)> lstOperation = pAsyncOperationList.front ();
-					pAsyncOperationList.pop ();
-					
-					if (!pAsyncOperationList.empty ())
+					bool bIsNotSkip = true;
+
+					do
 					{
-						std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)> crtOperation = pAsyncOperationList.front ();
+						bIsNotSkip = true;
+							
+						HTTPCLIENT* plastClient = pAsyncOperationList.front ().first;
+						pAsyncOperationList.pop ();
 						
-						if (lstOperation.first != crtOperation.first)
-							if (WinHttpSetStatusCallback (crtOperation.first -> hRequest, WinHttpGlobalCallBack, 
-								WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
+						if (!pAsyncOperationList.empty ())
+						{
+							std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)> pirOperation = pAsyncOperationList.front ();
+							HTTPCLIENT* pNextClient = pirOperation.first;
+							bool (HTTPCLIENT:: * pNextOperation) (void) = pirOperation.second;
+						
+							if (plastClient != pNextClient)
+								if (WinHttpSetStatusCallback (pNextClient-> hRequest, WinHttpGlobalCallBack,
+									WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
+								{
 									HttpErrorReport (__FUNCTION__, "WinHttpSetStatusCallback", true);
+									bIsNotSkip = false;
+								}
 									
-						(crtOperation.first ->* crtOperation.second) ();
+							if (bIsNotSkip)
+								bIsNotSkip = (pNextClient ->* pNextOperation) ();
+						}
 					}
+					while (!bIsNotSkip);
 					
 					break;
 				}
