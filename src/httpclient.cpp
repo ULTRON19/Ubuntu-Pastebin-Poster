@@ -445,13 +445,13 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 				case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
 				{
 					bool bIsNotSkip = true;
+					
+					HTTPCLIENT* plastClient = pAsyncOperationList.front ().first;
+					pAsyncOperationList.pop ();
 
 					do
 					{
 						bIsNotSkip = true;
-							
-						HTTPCLIENT* plastClient = pAsyncOperationList.front ().first;
-						pAsyncOperationList.pop ();
 						
 						if (!pAsyncOperationList.empty ())
 						{
@@ -469,6 +469,14 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 									
 							if (bIsNotSkip)
 								bIsNotSkip = (pNextClient ->* pNextOperation) ();
+						
+							if (!bIsNotSkip)
+							{
+								if (pNextClient -> requestCallBack)
+									pNextClient -> requestCallBack (WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, nullptr, 0);
+									
+								pAsyncOperationList.pop ();
+							}
 						}
 					}
 					while (!bIsNotSkip);
