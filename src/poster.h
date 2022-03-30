@@ -19,7 +19,7 @@ public:
 	
 	// Initialize
 	bool Initialize ();
-	void CoInitialize ();
+	void UnInitialize ();
 	
 	// Submit the data
 	bool Post (std::string sPoster, std::string sSyntax, std::string sExpiration, std::string sFilePath);

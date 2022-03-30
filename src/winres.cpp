@@ -10,7 +10,7 @@ WINRES::WINRES ():
 
 WINRES::~WINRES ()
 {
-	CoInitialize ();
+	UnInitialize ();
 }
 
 bool WINRES::Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
@@ -45,7 +45,7 @@ bool WINRES::ExtractToLocal (LPCSTR lpFileName)
 	return res;
 }
 
-void WINRES::CoInitialize ()
+void WINRES::UnInitialize ()
 {
 	if (hMem)
 		FreeResource (hMem);
@@ -63,7 +63,7 @@ WINFONT::WINFONT ():
 
 WINFONT::~WINFONT ()
 {
-	CoUninitialize ();
+	UnInitialize ();
 }
 
 HFONT WINFONT::GetFontHandle ()
@@ -82,7 +82,7 @@ bool WINFONT::Initialize (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId
 	return CreateFontHandle (_fontName, _size, _bold, _italic, _underline, _strlikeOut);
 }
 
-void WINFONT::CoUninitialize ()
+void WINFONT::UnInitialize ()
 {
 	UninstallFont ();
 	DestroyFontHandle ();

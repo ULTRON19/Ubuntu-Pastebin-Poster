@@ -11,7 +11,7 @@ MAINMODULE::MAINMODULE ()
 
 MAINMODULE::~MAINMODULE ()
 {
-	CoInitialize ();
+	UnInitialize ();
 }
 
 MAINMODULE* MAINMODULE::GetInstance ()
@@ -70,7 +70,7 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	return true;
 }
 
-void MAINMODULE::CoInitialize ()
+void MAINMODULE::UnInitialize ()
 {
 	pIniManager -> Save ();
 	

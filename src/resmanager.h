@@ -60,7 +60,7 @@ public:
 	
 	// Initialize
 	bool Initialize (HINSTANCE _hInstance);
-	void CoInitialize ();
+	void UnInitialize ();
 	
 	// Get resource
 	HICON GetIconHandle (DWORD dwIndex);

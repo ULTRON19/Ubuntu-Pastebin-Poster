@@ -9,7 +9,7 @@ POSTER::POSTER ():
 
 POSTER::~POSTER ()
 {
-	CoInitialize ();
+	UnInitialize ();
 }
 
 POSTER* POSTER::GetInstance ()
@@ -129,7 +129,7 @@ bool POSTER::Initialize ()
 	return true;
 }
 
-void POSTER::CoInitialize ()
+void POSTER::UnInitialize ()
 {
 	if (pHttpClient)
 	{

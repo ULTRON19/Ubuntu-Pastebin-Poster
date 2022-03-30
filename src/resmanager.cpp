@@ -9,7 +9,7 @@ RESMANAGER::RESMANAGER ():
 
 RESMANAGER::~RESMANAGER ()
 {
-	CoInitialize ();
+	UnInitialize ();
 }
 
 RESMANAGER* RESMANAGER::GetInstance ()
@@ -68,15 +68,15 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 	return res;
 }
 
-void RESMANAGER::CoInitialize ()
+void RESMANAGER::UnInitialize ()
 {
 	SAFE_DELETE_OBJ (hiUbuntu);
 	SAFE_DELETE_OBJ (hcArrow);
 	SAFE_DELETE_OBJ (hcIbeam);
 	SAFE_DELETE_OBJ (hcUpArrow);
 	SAFE_DELETE_OBJ (hcWait);
-	rfUbuntu.CoUninitialize ();
-	rSetup.CoInitialize ();
+	rfUbuntu.UnInitialize ();
+	rSetup.UnInitialize ();
 }
 
 HICON RESMANAGER::GetIconHandle (DWORD dwIndex)

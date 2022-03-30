@@ -15,7 +15,7 @@ public:
 	
 	// Initialize
 	bool Initialize (HINSTANCE hInstance);
-	void CoInitialize ();
+	void UnInitialize ();
 	
 	// Main loop
 	int EnterLoop ();

@@ -17,7 +17,7 @@ class WINRES
 public:
 	// Init / CoInit
 	bool Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType);
-	void CoInitialize ();
+	void UnInitialize ();
 	
 	// Write resource to local file
 	bool ExtractToLocal (LPCSTR lpFileName);
@@ -35,7 +35,7 @@ class WINFONT: private WINRES
 public:
 	// Extract font from resource, install it and create the handle
 	bool Initialize (HINSTANCE hInstance, LPCWSTR _fontName, LPCWSTR _resId = NULL, int _size = FW_DONTCARE, int _bold = FW_DONTCARE, bool _italic = false, bool _underline = false, bool _strlikeOut = false);
-	void CoUninitialize ();
+	void UnInitialize ();
 	
 	// Get the handle
 	HFONT GetFontHandle ();
