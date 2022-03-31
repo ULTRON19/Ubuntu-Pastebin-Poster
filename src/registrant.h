@@ -4,7 +4,7 @@
 #define DEFAULT_REGKEYNAME	"Ubuntu Pastebin Poster"
 #define DEFAULT_MENUTEXT	"Post by Ubuntu Pastebin Poster"
 
-#include "errhandler.h"
+#include "logger.h"
 
 /*
 -- HKEY_CLASSES_ROOT
@@ -19,9 +19,6 @@
 class REGISTRANT
 {
 public:
-	// Error report
-	static void RegErrorReport (std::string mainFunc, const char* func, LSTATUS errCode);
-	
 	void Initialize (std::string _sApplication);
 	
 	// Get / Set status

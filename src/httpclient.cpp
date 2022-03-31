@@ -1,6 +1,6 @@
 #include "httpclient.h"
 
-std::queue <std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)>> HTTPCLIENT::pAsyncOperationList;
+std::queue <std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)>> HTTPCLIENT::qAsyncOperation;
 
 HTTPCLIENT::HTTPCLIENT ():
 	hSession (nullptr), hConnect (nullptr), hRequest (nullptr),
@@ -33,7 +33,7 @@ bool HTTPCLIENT::OpenHttp (LPCWSTR pszAgentW, DWORD dwAccessType, LPCWSTR pszPro
 	hSession = WinHttpOpen (pszAgentW, dwAccessType, pszProxyW, pszProxyBypassW, dwFlags);
 	
 	if (!hSession)
-		return HttpErrorReport (__FUNCTION__, "WinHttpOpen", true), false;
+		return HTTPREPORT ("WinHttpOpen"), false;
 		
 	isAsync = dwFlags & WINHTTP_FLAG_ASYNC;
 	return true;
@@ -48,7 +48,7 @@ bool HTTPCLIENT::ConnectHttp (LPCWSTR pswzServerName, INTERNET_PORT nServerPort)
 	hConnect = WinHttpConnect (hSession, pswzServerName, nServerPort, 0);
 	
 	if (!hConnect)
-		return HttpErrorReport (__FUNCTION__, "WinHttpConnect", true), false;
+		return HTTPREPORT ("WinHttpConnect"), false;
 	
 	return true;
 }
@@ -61,7 +61,7 @@ bool HTTPCLIENT::OpenRequest (LPCWSTR pwszVerb, LPCWSTR pwszObjectName, LPCWSTR 
 	hRequest = WinHttpOpenRequest (hConnect, pwszVerb, pwszObjectName, pwszVersion, pwszReferrer, ppwszAcceptTypes, dwFlags);
 	
 	if (!hRequest)
-		return HttpErrorReport (__FUNCTION__, "WinHttpOpenRequest", true), false;
+		return HTTPREPORT ("WinHttpOpenRequest"), false;
 	
 	return true;
 }
@@ -78,7 +78,7 @@ bool HTTPCLIENT::AddHeader (WSPIRLIST listHeader, DWORD dwModifiers)
 		header += pir.first + L": " + pir.second + L"\r\n";
 	
 	if (!WinHttpAddRequestHeaders (hRequest, header.c_str (), DWORD (header.length ()), WINHTTP_ADDREQ_FLAG_ADD))
-		return HttpErrorReport (__FUNCTION__, "WinHttpAddRequestHeaders", true), false;
+		return HTTPREPORT ("WinHttpAddRequestHeaders"), false;
 	
 	return true;
 }
@@ -133,7 +133,7 @@ bool HTTPCLIENT::SendRequest ()
 		
 		if (!WinHttpSendRequest (hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA,
 			0, (DWORD) sRequest.length (), reinterpret_cast <DWORD_PTR> (this)))
-			return HttpErrorReport (__FUNCTION__, "WinHttpSendRequest", true), false;
+			return HTTPREPORT ("WinHttpSendRequest"), false;
 			
 		return true;
 	}
@@ -185,7 +185,7 @@ bool HTTPCLIENT::SendData ()
 		
 	DWORD dwBytesWritten = 0;
 	if (!WinHttpWriteData (hRequest, sRequest.c_str (), (DWORD) sRequest.length (), isAsync ? nullptr : &dwBytesWritten))
-		return HttpErrorReport (__FUNCTION__, "WinHttpWriteData", true), false;
+		return HTTPREPORT ("WinHttpWriteData"), false;
 
 	return true;
 }
@@ -196,7 +196,7 @@ bool HTTPCLIENT::ReceiveResponse ()
 		return false;
 	
 	if (!WinHttpReceiveResponse (hRequest, NULL))
-		return HttpErrorReport (__FUNCTION__, "ReceiveResponse", true), false;
+		return HTTPREPORT ("ReceiveResponse"), false;
 	
 	return true;
 }
@@ -208,7 +208,7 @@ bool HTTPCLIENT::QueryDataAvaliable ()
 		
 	dwSize = 0;
 	if (!WinHttpQueryDataAvailable (hRequest, isAsync ? nullptr : &dwSize))
-		return HttpErrorReport (__FUNCTION__, "WinHttpQueryDataAvailable", true), false;
+		return HTTPREPORT ("WinHttpQueryDataAvailable"), false;
 	
 	return true;
 }
@@ -229,7 +229,7 @@ bool HTTPCLIENT::ReadData ()
 		pszOutBuffer [dwSize] = '\0';
 		
 		if (!WinHttpReadData (hRequest, pszOutBuffer, dwSize, nullptr))
-			return HttpErrorReport (__FUNCTION__, "WinHttpReadData", true), false;
+			return HTTPREPORT ("WinHttpReadData"), false;
 			
 		return true;
 	}
@@ -247,7 +247,7 @@ bool HTTPCLIENT::ReadData ()
 		pszOutBuffer [dwSize] = '\0';
 
 		if (!WinHttpReadData (hRequest, pszOutBuffer, dwSize, &dwDownloaded))
-			return HttpErrorReport (__FUNCTION__, "WinHttpReadData", true), false;
+			return HTTPREPORT ("WinHttpReadData"), false;
 
 		else
 			sResponse += std::string (pszOutBuffer);
@@ -299,14 +299,14 @@ bool HTTPCLIENT::AsyncOperate (bool (HTTPCLIENT::*operation) (void))
 		operation == &HTTPCLIENT::CloseRequest)
 			return false;
 	
-	pAsyncOperationList.push ({this, operation});
+	qAsyncOperation.push ({this, operation});
 	
-	if (pAsyncOperationList.size () == 1)
+	if (qAsyncOperation.size () == 1)
 	{
 		if (WinHttpSetStatusCallback (hRequest, WinHttpGlobalCallBack, 
 			WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
 			// It's an unstable deal
-			return HttpErrorReport (__FUNCTION__, "WinHttpSetStatusCallback", true), false;
+			return HTTPREPORT ("WinHttpSetStatusCallback"), false;
 				
 		return (this ->* operation) ();
 	}
@@ -320,7 +320,7 @@ bool HTTPCLIENT::SetOption (DWORD dwOption, DWORD dwFlags)
 		return false;
 	
 	if (!WinHttpSetOption (hRequest, dwOption, &dwFlags, sizeof (dwFlags)))
-		return HttpErrorReport (__FUNCTION__, "WinHttpSetOption", true), false;
+		return HTTPREPORT ("WinHttpSetOption"), false;
 		
 	return true;
 }
@@ -339,7 +339,7 @@ void HTTPCLIENT::RemoveRequestCallBack ()
 	
 	if (WinHttpSetStatusCallback (hRequest, nullptr, 
 		WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
-		HttpErrorReport (__FUNCTION__, "WinHttpSetStatusCallback", true);
+		HTTPREPORT ("WinHttpSetStatusCallback");
 }
 
 bool HTTPCLIENT::CloseHttp ()
@@ -348,7 +348,7 @@ bool HTTPCLIENT::CloseHttp ()
 		return true;
 	
 	if (!WinHttpCloseHandle (hSession))
-		return HttpErrorReport (__FUNCTION__, "WinHttpCloseHandle", false), false;
+		return HTTPRECORD ("WinHttpCloseHandle"), false;
 	
 	hSession = nullptr;
 	return true;
@@ -360,7 +360,7 @@ bool HTTPCLIENT::CloseConnect ()
 		return true;
 	
 	if (!WinHttpCloseHandle (hConnect))
-		return HttpErrorReport (__FUNCTION__, "WinHttpCloseHandle", false), false;
+		return HTTPRECORD ("WinHttpCloseHandle"), false;
 	
 	hConnect = nullptr;
 	return true;
@@ -374,7 +374,7 @@ bool HTTPCLIENT::CloseRequest ()
 	RemoveRequestCallBack ();
 
 	if (!WinHttpCloseHandle (hRequest))
-		return HttpErrorReport (__FUNCTION__, "WinHttpCloseHandle", false), false;
+		return HTTPRECORD ("WinHttpCloseHandle"), false;
 	
 	hRequest = nullptr;
 	return true;
@@ -387,18 +387,6 @@ void HTTPCLIENT::ClearBuffer ()
 	
 	delete [] pszOutBuffer;
 	pszOutBuffer = nullptr;
-}
-
-void HTTPCLIENT::HttpErrorReport (std::string mainFunc, const char* func, bool isAlert)
-{
-	ERRHANDLER ErrorReport;
-	int err = GetLastError ();
-
-	// Improve error reporting
-	std::string errMsg = "Http Error Code: " + std::to_string (err);
-
-	(mainFunc += " - ") += func;
-	ErrorReport (mainFunc, errMsg, isAlert);
 }
 
 void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR dwContext, 
@@ -446,16 +434,16 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 				{
 					bool bIsNotSkip = true;
 					
-					HTTPCLIENT* pLastClient = pAsyncOperationList.front ().first;
-					pAsyncOperationList.pop ();
+					HTTPCLIENT* pLastClient = qAsyncOperation.front ().first;
+					qAsyncOperation.pop ();
 
 					do
 					{
 						bIsNotSkip = true;
 						
-						if (!pAsyncOperationList.empty ())
+						if (!qAsyncOperation.empty ())
 						{
-							std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)> pirOperation = pAsyncOperationList.front ();
+							std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)> pirOperation = qAsyncOperation.front ();
 							HTTPCLIENT* pNextClient = pirOperation.first;
 							bool (HTTPCLIENT:: * pNextOperation) (void) = pirOperation.second;
 						
@@ -463,7 +451,7 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 								if (WinHttpSetStatusCallback (pNextClient-> hRequest, WinHttpGlobalCallBack,
 									WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
 								{
-									HttpErrorReport (__FUNCTION__, "WinHttpSetStatusCallback", true);
+									HTTPREPORT ("WinHttpSetStatusCallback");
 									bIsNotSkip = false;
 								}
 									
@@ -478,7 +466,7 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 								if (pNextClient -> requestCallBack)
 									pNextClient -> requestCallBack (WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, nullptr, 0);
 									
-								pAsyncOperationList.pop ();
+								qAsyncOperation.pop ();
 							}
 						}
 					}

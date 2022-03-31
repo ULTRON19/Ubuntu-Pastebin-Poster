@@ -10,7 +10,7 @@
 #include <functional>
 #include <map>
 #include <queue>
-#include "errhandler.h"
+#include "logger.h"
 
 #define XWWWFORMURLENCODED 0
 #define FORMDATA 1
@@ -57,16 +57,13 @@ public:
 	~HTTPCLIENT ();
 		
 private:
-	// Autocomplete GetLastError and submit to ERRHANDLER
-	static void HttpErrorReport (std::string mainFunc, const char* func, bool isAlert);
-	
 	// CallBack function
 	static void CALLBACK WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR dwContext, 
 		DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength);
 	
 	// A queue is used to process each operation because only one asynchronous 
 	// operation can exist at a time. It follows the FIFO principle.
-	static std::queue <std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)>> pAsyncOperationList;
+	static std::queue <std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)>> qAsyncOperation;
 	
 	// Clear buffer for receiving data
 	void ClearBuffer ();

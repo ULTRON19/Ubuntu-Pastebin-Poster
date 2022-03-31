@@ -17,12 +17,12 @@ bool WINRES::Initialize (HINSTANCE hInstance, LPCWSTR lpName, LPCWSTR lpType)
 {
 	HRSRC hRes = FindResourceW (hInstance, lpName, lpType);
 	if (hRes == nullptr)
-		return WINAPP::WinErrorReport (__FUNCTION__, "FindResourceW", false), false; 
+		return WINRECORD ("FindResourceW"), false; 
 	
 	hMem = LoadResource (nullptr, hRes);
 	
 	if (hMem == nullptr)
-		return WINAPP::WinErrorReport (__FUNCTION__, "Initializeource", false), false;
+		return WINRECORD ("LoadResource"), false;
 		
 	dwSize = SizeofResource (nullptr, hRes);
 	return true;
@@ -33,13 +33,13 @@ bool WINRES::ExtractToLocal (LPCSTR lpFileName)
 	HANDLE hFile = CreateFileA (lpFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
 	
 	if (hFile == INVALID_HANDLE_VALUE)
-		return WINAPP::WinErrorReport (__FUNCTION__, "CreateFileW", true), false;
+		return WINREPORT ("CreateFileW"), false;
 	
 	DWORD dwWrite = 0;
 	bool res = WriteFile (hFile, hMem, dwSize, &dwWrite, nullptr);
 	
 	if (!res)
-		WINAPP::WinErrorReport (__FUNCTION__, "WriteFile", true);
+		WINREPORT ("WriteFile");
 	
 	CloseHandle (hFile);
 	return res;
@@ -95,12 +95,12 @@ bool WINFONT::InstallFont (HINSTANCE hInstance, LPCWSTR _resId)
 	
 	HANDLE pvData = LockResource (hMem);
 	if (pvData == nullptr)
-		return WINAPP::WinErrorReport (__FUNCTION__, "LockResource", false), false;
+		return WINRECORD ("LockResource"), false;
 	
 	DWORD nFontsInstalled = 0;
 	fontInstaller = AddFontMemResourceEx (pvData, dwSize, NULL, &nFontsInstalled);
 	if (fontInstaller == nullptr)
-		return WINAPP::WinErrorReport (__FUNCTION__, "AddFontMemResourceEx", false), false;
+		return WINRECORD ("AddFontMemResourceEx"), false;
 	
 	return true;
 }

@@ -7,26 +7,6 @@ WINAPP::WINAPP ():
 {
 }
 
-void WINAPP::WinErrorReport (std::string mainFunc, const char* func, bool isAlert)
-{
-	ERRHANDLER ErrorReport;
-	char msgbuf [256] = {0};
-	int err = GetLastError ();
-
-	msgbuf [0] = '\0';
-
-	// Convert error codes to messages
-	FormatMessageA (FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err,
-					MAKELANGID (LANG_ENGLISH, SUBLANG_DEFAULT), msgbuf, sizeof (msgbuf), NULL);
-
-	// Improve error reporting
-	std::string errMsg (msgbuf);
-	errMsg += "Win Error Code: " + std::to_string (err);
-
-	(mainFunc += " - ") += func;
-	ErrorReport (mainFunc, errMsg, isAlert);
-}
-
 LRESULT CALLBACK WINAPP::GlobalWndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	WINAPP* pThis = nullptr;
@@ -66,7 +46,7 @@ LPCSTR WINAPP::Initialize (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, s
 		// 1410: Class already exists.
 		if (GetLastError () != 1410)
 		{
-			WinErrorReport (__FUNCTION__, "RegisterClassExA", true);
+			WINREPORT ("RegisterClassExA");
 			return nullptr;
 		}		
 	}
@@ -87,16 +67,16 @@ LPCSTR WINAPP::Initialize (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, s
 
 	if (hwnd == nullptr)
 	{
-		WinErrorReport (__FUNCTION__, "CreateWindowExA", true);
+		WINREPORT ("CreateWindowExA");
 		return nullptr;
 	}
 
 	return wcexa.lpszClassName;
 }
 
-HWND WINAPP::GetHWND ()
+HWND WINAPP::GetHWND () const
 {
-	return this -> hwnd;
+	return hwnd;
 }
 
 WPARAM WINAPP::EnterMsgLoop ()

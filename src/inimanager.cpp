@@ -10,7 +10,7 @@ bool INIMANAGER::Initialize (std::string sFolderPath)
 {
 	sFileName = sFolderPath + DEFAULT_ININAME;
 	
-	if (!~access (sFileName.c_str (), 4))
+	if (!~_access (sFileName.c_str (), 4))
 		if (!ExtractIniFromResource ())
 			return false;
 		
@@ -40,7 +40,7 @@ bool INIMANAGER::Initialize (std::string sFolderPath)
 
 bool INIMANAGER::Save ()
 {
-	if (!~access (sFileName.c_str (), 2))
+	if (!~_access (sFileName.c_str (), 2))
 		return false;
 
 	bool res = SavePosterNameToIni ();
@@ -131,8 +131,15 @@ bool INIMANAGER::LoadPosterNameFromIni ()
 			res = false;
 	}
 	
-	if (sPosterName.length () > 30)
-		sPosterName.resize (30);
+	std::wstring wsTemp;
+	
+	if (WINCVT::StringToWString (wsTemp, sPosterName, CP_ACP) && wsTemp.size () > MAX_CHARACTER)
+	{
+		wsTemp.resize (MAX_CHARACTER);
+		
+		if (!WINCVT::WStringToString (sPosterName, wsTemp, CP_ACP))
+			(sPosterName = std::string (pcBuffer)).resize (MAX_CHARACTER);
+	}
 	
 	delete [] pcBuffer;
 	return res;
@@ -142,7 +149,7 @@ bool INIMANAGER::SavePosterNameToIni ()
 {
 	if (!sPosterName.empty ())
 		if (!WritePrivateProfileStringA ("Poster", "name", sPosterName.c_str (), sFileName.c_str ()))
-			return WINAPP::WinErrorReport (__FUNCTION__, "WritePrivateProfileStringA", false), false;
+			return WINREPORT ("WritePrivateProfileStringA"), false;
 			
 	return true;
 }

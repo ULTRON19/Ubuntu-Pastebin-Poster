@@ -22,7 +22,7 @@ bool BASEITEM::LoadFromIni (std::string sFilePath)
 	bool res;
 
 	if (!(res = GetPrivateProfileStringA (sName.c_str (), PREFER_KEYNAME, "", pcbuffer, MAX_KEYLEN, sFilePath.c_str ())))
-		WINAPP::WinErrorReport (__FUNCTION__, "GetPrivateProfileStringA", false);
+		WINRECORD ("GetPrivateProfileStringA");
 	
 	if (res)
 		uiPrefer = (unsigned int) atoi (pcbuffer);
@@ -33,11 +33,11 @@ bool BASEITEM::LoadFromIni (std::string sFilePath)
 
 bool BASEITEM::SaveToIni (std::string sFilePath)
 {
-	if (sFilePath.empty () || !~access (sFilePath.c_str (), 2))
+	if (sFilePath.empty () || !~_access (sFilePath.c_str (), 2))
 		return false;
 	
 	if (!WritePrivateProfileStringA (sName.c_str (), PREFER_KEYNAME, std::to_string (uiPrefer).c_str (), sFilePath.c_str ()))
-		return WINAPP::WinErrorReport (__FUNCTION__, "WritePrivateProfileStringA", false), false;
+		return WINRECORD ("WritePrivateProfileStringA"), false;
 	
 	return true;
 }
@@ -118,7 +118,7 @@ bool SYNTAXITEM::SaveToIni (std::string sFilePath)
 	
 	if (!sSuffix.empty ())
 		if (!WritePrivateProfileStringA (sName.c_str (), SUFFIX_KEYNAME, sSuffix.c_str (), sFilePath.c_str ()))
-			return WINAPP::WinErrorReport (__FUNCTION__, "WritePrivateProfileStringA", false), false;
+			return WINRECORD ("WritePrivateProfileStringA"), false;
 	
 	return true;
 }

@@ -7,7 +7,7 @@
 #define MAX_KEYLEN	256
 
 #include <vector>
-#include "winapp.h"
+#include "logger.h"
 
 class BASEITEM
 {

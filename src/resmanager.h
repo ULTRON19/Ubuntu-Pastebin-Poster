@@ -50,6 +50,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <unordered_map>
+#include "winapp.h"
 #include "winres.h"
 
 class RESMANAGER

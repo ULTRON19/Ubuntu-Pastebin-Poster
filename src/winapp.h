@@ -2,7 +2,7 @@
 #define __WINAPP__
 
 #include <functional>
-#include "errhandler.h"
+#include "logger.h"
 
 #define Screen_FullWidth	(GetSystemMetrics (SM_CXSCREEN))
 #define Screen_FullHeight	(GetSystemMetrics (SM_CYSCREEN))
@@ -28,16 +28,13 @@ struct WNDSTYLEEXA
 class WINAPP
 {
 public:
-	// Autocomplete GetLastError and submit to ERRHANDLER
-	static void WinErrorReport (std::string mainFunc, const char* func, bool isAlert = false);
-	
 	// Global message queue
 	static LRESULT CALLBACK GlobalWndProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 	// Initialize window
 	LPCSTR Initialize (const WNDCLASSEXA& wcexa, const WNDSTYLEEXA& wsexa, std::function <LRESULT (HWND, UINT, WPARAM, LPARAM)> _WndProc, std::function <void (HWND)> _MainLoop = nullptr);
 
-	HWND GetHWND ();
+	HWND GetHWND () const;
 	WPARAM EnterMsgLoop ();
 	
 	WINAPP ();

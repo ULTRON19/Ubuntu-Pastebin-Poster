@@ -10,7 +10,8 @@
 	}\
 }
 
-#include "winapp.h"
+#include <windows.h>
+#include "logger.h"
 
 class WINRES
 {

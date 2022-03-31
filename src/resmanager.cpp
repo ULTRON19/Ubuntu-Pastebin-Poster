@@ -27,35 +27,35 @@ bool RESMANAGER::Initialize (HINSTANCE _hInstance)
 	hiUbuntu = LoadIconA (hInstance, MAKEINTRESOURCEA (ICON_UBUNTU));
 	if (hiUbuntu == nullptr)
 	{
-		WINAPP::WinErrorReport (__FUNCTION__, "LoadIconA", false);
+		WINRECORD ("LoadIconA");
 		res = false;
 	}
 	
 	hcArrow = LoadCursorA (hInstance, MAKEINTRESOURCEA (CURSOR_ARROW));
 	if (hcArrow == nullptr)
 	{
-		WINAPP::WinErrorReport (__FUNCTION__, "LoadCursorA", false);
+		WINRECORD ("LoadCursorA");
 		res = false;
 	}
 	
 	hcIbeam = LoadCursorA (hInstance, MAKEINTRESOURCEA (CURSOR_IBEAM));
 	if (hcIbeam == nullptr)
 	{
-		WINAPP::WinErrorReport (__FUNCTION__, "LoadCursorA", false);
+		WINRECORD ("LoadCursorA");
 		res = false;
 	}
 	
 	hcUpArrow = LoadCursorA (hInstance, MAKEINTRESOURCEA (CURSOR_UPARROW));
 	if (hcUpArrow == nullptr)
 	{
-		WINAPP::WinErrorReport (__FUNCTION__, "LoadCursorA", false);
+		WINRECORD ("LoadCursorA");
 		res = false;
 	}
 	
 	hcWait = LoadCursorA (hInstance, MAKEINTRESOURCEA (CURSOR_WAIT));
 	if (hcWait == nullptr)
 	{
-		WINAPP::WinErrorReport (__FUNCTION__, "LoadCursorA", false);
+		WINRECORD ("LoadCursorA");
 		res = false;
 	}
 	
@@ -186,7 +186,7 @@ bool RESMANAGER::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindo
 	hControl = CreateWindowA (lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, NULL);
 	
 	if (hControl == nullptr)
-		return WINAPP::WinErrorReport (__FUNCTION__, "CreateWindowA", true), false;
+		return WINREPORT ("CreateWindowA"), false;
 	
 	// Set font
 	SendMessage (hControl, WM_SETFONT, (WPARAM) (dwIndexFont ? GetFontHandle (dwIndexFont) : 0), 0);

@@ -31,9 +31,8 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	// Initialize regedit
 	pRegistrant -> Initialize (sFolderPath + "\\" + sFileName);
 	
-	// Initialize error handler
-	ERRHANDLER::sDefaultFilePath = sFolderPath;
-	ERRHANDLER erh;
+	// Initialize logger
+	LOGGER::SetFolderPath (sFolderPath);
 	
 	// Initialize resource
 	if (!pResourceManager -> Initialize (hInstance))
@@ -50,6 +49,9 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	// Initialize main front
 	if (!pMainFront -> Initialize ())
 		return false;
+		
+	// Set main window handle for logger
+	LOGGER::SetWindowHandle (pMainFront -> GetMainWindowHandle ());
 	
 	std::wstring wsFilePath;
 	
@@ -92,7 +94,7 @@ bool MAINMODULE::GetExecuteFilePath (std::string& sFolderPath, std::string& sFil
 	
 	if (GetModuleFileNameA (NULL, pcBuffer, MAX_PATH) == 0)
 	{
-		MessageBox (NULL, "Locate the file failed!", "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		ALERT (LVERROR, "Locate the file failed!");
 		
 		delete [] pcBuffer;
 		return false;
@@ -116,10 +118,7 @@ bool MAINMODULE::GetCmdFilePath (std::wstring& wsFilePath)
 	LPWSTR *szArglist = CommandLineToArgvW (GetCommandLineW (), &nArgs);
 	
 	if (szArglist == nullptr)
-	{
-		WINAPP::WinErrorReport (__FUNCTION__, "CommandLineToArgvW", false);
-		return false;
-	}
+		return WINRECORD ("CommandLineToArgvW"), false;
 	
 	// no additional input
 	if (nArgs == 1)
@@ -129,8 +128,7 @@ bool MAINMODULE::GetCmdFilePath (std::wstring& wsFilePath)
 	}
 	
 	if (nArgs > 2)
-		MessageBoxA (NULL, "Multiple files are not currently supported, the first valid file will be read.", 
-			"Warning", MB_OK | MB_ICONWARNING | MB_TASKMODAL);
+		ALERT (LVWARN, "Multiple files are not currently supported, the first valid file will be read.");
 	
 	for (int i = 1; i < nArgs; i ++)
 	{
@@ -146,7 +144,7 @@ bool MAINMODULE::GetCmdFilePath (std::wstring& wsFilePath)
 	}
 	
 	if (!res)
-		MessageBoxA (NULL, "Please select a valid file!", "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		ALERT (LVERROR, "Please select a valid file!");
 	
 	LocalFree (szArglist);
 	return res;

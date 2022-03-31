@@ -81,6 +81,11 @@ bool MAINFRONT::Initialize ()
 	return true;
 }
 
+HWND MAINFRONT::GetMainWindowHandle () const
+{
+	return mainApp.GetHWND ();
+}
+
 void MAINFRONT::SetBoxItem ()
 {
 	INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
@@ -138,24 +143,12 @@ void MAINFRONT::SetFilePath (std::string sFilePath)
 
 void MAINFRONT::SetFilePath (std::wstring wsFilePath)
 {
-	int len = WideCharToMultiByte (CP_ACP, 0, wsFilePath.c_str (), (int) wsFilePath.size (), NULL, 0, NULL, NULL);
-
-	char* pcBuffer = new char [(long long) len + 1];
+	std::string sFilePath;
 	
-	if (!WideCharToMultiByte (CP_ACP, 0, wsFilePath.c_str (), (int) wsFilePath.size (), pcBuffer, len, NULL, NULL))
-	{
+	if (WINCVT::WStringToString (sFilePath, wsFilePath, CP_ACP))
+		SetFilePath (sFilePath);
+	else
 		SetWindowTextW (hedtFilePath, wsFilePath.c_str ());
-		
-		delete [] pcBuffer;
-		return;
-	}
-	
-	pcBuffer [len] = '\0';
-	
-	std::string sFilePath (pcBuffer);
-	delete [] pcBuffer;
-	
-	SetFilePath (sFilePath);
 }
 
 void MAINFRONT::SetRightMenu (bool bRightMenu)
@@ -191,7 +184,7 @@ void MAINFRONT::PostCompleteHandle (std::wstring wsURL)
 	if (!wsURL.empty ())
 		SetWindowTextW (hedtURL, wsURL.c_str ());
 	else
-		MessageBoxA (NULL, "Post failed!", "Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		ALERT (LVERROR, "Post failed!");
 }
 
 void MAINFRONT::SetRightMenuCallBack (std::function <bool (bool)> cbRightMenu)
@@ -225,21 +218,24 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 					{
 						case EN_CHANGE:
 						{
-							char* pcBuffer = new char [MAX_PATHLEN];
+							wchar_t* pwcBuffer = new wchar_t [MAX_CHARACTER + 5];
 							INIMANAGER* pIniManager = INIMANAGER::GetInstance ();
 							
-							GetWindowTextA (hedtPoster, pcBuffer, MAX_CHARACTER + 5);
+							GetWindowTextW (hedtPoster, pwcBuffer, MAX_CHARACTER + 5);
 
-							if (lstrlenA (pcBuffer) > MAX_CHARACTER)
+							if (lstrlenW (pwcBuffer) > MAX_CHARACTER)
 							{
-								pcBuffer [MAX_CHARACTER] = 0;
-								SetWindowTextA (hedtPoster, pcBuffer);
-								SendMessageA (hedtPoster, EM_SETSEL, 0, -1);
+								pwcBuffer [MAX_CHARACTER] = 0;
+								SetWindowTextW (hedtPoster, pwcBuffer);
+								SendMessageW (hedtPoster, EM_SETSEL, 0, -1);
 							}
 							
-							pIniManager -> UpdatePosterName (pcBuffer);
+							std::string sPoster;
+	
+							if (WINCVT::WStringToString (sPoster, pwcBuffer, CP_ACP))
+								pIniManager -> UpdatePosterName (sPoster);
 
-							delete [] pcBuffer;
+							delete [] pwcBuffer;
 							break;
 						}
 
@@ -398,14 +394,13 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 {
 	char* cbuffer = new char [MAX_PATHLEN];
 	
-	GetWindowTextA (hedtPoster, cbuffer, MAX_CHARACTER); 
+	GetWindowTextA (hedtPoster, cbuffer, MAX_PATHLEN);
 	sPoster = std::string ((const char*) cbuffer);
 	
 	// Check the 'Poster' field is empty or not
 	if (sPoster.length () == 0)
 	{
-		MessageBoxA (mainApp.GetHWND (), "Please fill out 'Poster' field!", 
-			"Warning", MB_OK | MB_ICONWARNING | MB_TASKMODAL);
+		ALERT (LVWARN, "Please fill out 'Poster' field!");
 		delete [] cbuffer;
 		return false;
 	}
@@ -426,8 +421,7 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 	// Check the 'File path' field is empty	or not
 	if (sFilePath.length () == 0)
 	{
-		MessageBoxA (mainApp.GetHWND (), "Please select a valid file!", 
-			"Warning", MB_OK | MB_ICONWARNING | MB_TASKMODAL);
+		ALERT (LVWARN, "Please select a valid file!");
 		delete [] cbuffer;
 		return false;
 	}
@@ -439,8 +433,7 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 					
 	if (uliFileSize.QuadPart == 0)
 	{
-		MessageBoxA (mainApp.GetHWND (), "This is an empty file!", 
-			"Warning", MB_OK | MB_ICONWARNING | MB_TASKMODAL);
+		ALERT (LVWARN, "This is an empty file!");
 		delete [] cbuffer;
 		return false;
 	}
@@ -506,8 +499,8 @@ bool MAINFRONT::GetChooseFilePath (std::string& sFilePath)
 		// When the user closed or canceled the dialog box, the return value is zero. 
 		if (errCode)
 		{
-			std::string errMsg = "A error occured.\nDialog error code: " + std::to_string (errCode);
-			ERRHANDLER () ("GetChooseFilePath - GetOpenFileNameA", errMsg, true);
+			std::string errMsg = "An error has occured.\nDialog error code: " + std::to_string (errCode);
+			LOGGER (LVERROR).Report ("GetChooseFilePath - GetOpenFileNameA", errMsg.c_str ());
 		}
 		
 		delete [] cbuffer;
@@ -528,8 +521,7 @@ bool MAINFRONT::GetDropFilePath (std::string& sFilePath, HDROP hDropInfo)
 	bool isDrop = false;
 	
 	if (nFileCount > 1)
-		MessageBoxA (mainApp.GetHWND (), "Multiple files are not currently supported, the first valid file will be read.", 
-			"Warning", MB_OK | MB_ICONWARNING | MB_TASKMODAL);
+		ALERT (LVWARN, "Multiple files are not currently supported, the first valid file will be read.");
 		
 	for (UINT i = 0; i < nFileCount; i ++)
 	{
@@ -550,8 +542,7 @@ bool MAINFRONT::GetDropFilePath (std::string& sFilePath, HDROP hDropInfo)
 			
 	if (!isDrop)
 	{
-		MessageBoxA (mainApp.GetHWND (), "Please select a valid file!", 
-			"Error", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+		ALERT (LVWARN, "Please select a valid file!");
 		return false;
 	}
 	

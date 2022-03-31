@@ -5,6 +5,7 @@
 
 #include "inimanager.h"
 #include "resmanager.h"
+#include "wincvt.h"
 
 class MAINFRONT
 {
@@ -14,6 +15,9 @@ public:
 	
 	// Init
 	bool Initialize ();
+	
+	// Get main window handle from class mainApp
+	HWND GetMainWindowHandle () const;
 	
 	// Set option for control
 	void SetFilePath (std::string sFilePath);

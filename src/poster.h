@@ -9,6 +9,8 @@
 #define PASTE_SERVER		L"paste.ubuntu.com"
 
 #include <iterator>
+
+#include "wincvt.h"
 #include "httpclient.h"
 
 class POSTER

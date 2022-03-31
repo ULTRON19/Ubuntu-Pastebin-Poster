@@ -7,6 +7,7 @@
 
 #include "comboboxitem.h"
 #include "resmanager.h"
+#include "wincvt.h"
 
 class INIMANAGER
 {

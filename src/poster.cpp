@@ -78,25 +78,34 @@ void POSTER::WinHttpStatusCallBack (DWORD dwInternetStatus, LPVOID lpvStatusInfo
 
 bool POSTER::Post (std::string sPoster, std::string sSyntax, std::string sExpiration, std::string sFilePath)
 {   	
+	std::string sFile;
+    if (!LoadFile (sFilePath, sFile))
+    	return false;
+    
+    if (!WINCVT::AnsiToUtf8 (sPoster, sPoster))
+    	return false;
+
     if (!pHttpClient -> OpenRequest (L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
 		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE))
 		return false;
 		
 	if (!pHttpClient -> SetOption (WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS))
+	{
+		pHttpClient -> CloseRequest ();
 		return false;
+	}
 		
 	if (!pHttpClient -> AddHeader ({
 		{L"Content-type", L"multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW"}
 		}, WINHTTP_ADDREQ_FLAG_ADD))
+	{
+		pHttpClient -> CloseRequest ();
 		return false;
+	}
 		
 	// Set callback
 	using namespace std::placeholders;
 	pHttpClient -> SetRequestCallBack (std::bind (&POSTER::WinHttpStatusCallBack, this, _1, _2, _3));
-		
-	std::string sFile;
-    if (!LoadFile (sFilePath, sFile))
-    	return false;
     
     pHttpClient -> ClearContent ();
     pHttpClient -> AddContent (FORMDATA, {
@@ -142,22 +151,57 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 {
 	// Check the file path
 	if (!~_access (sFilePath.c_str (), 4))
-		return ERRHANDLER () ("LoadFile", "Invalid file path", true), false;
+		return REPORT (LVERROR, "Invalid file path"), false;
 	
-	std::fstream file (sFilePath);
+	std::fstream fin (sFilePath);
 	
-	if (!file.good ())
-		return ERRHANDLER () ("LoadFile", "Cannot open file", true), false;
+	if (!fin.good ())
+		return REPORT (LVERROR, "Cannot open file"), false;
 	
-	// Ignoring spaces is not allowed
-	file.unsetf (std::ios::skipws);
+	sFile.clear ();
 	
-	std::istream_iterator <char> iter (file);
-	std::istream_iterator <char> eof;
+	for (char c; !fin.eof (); sFile.append (1, c))
+		fin.read (&c, 1);
 	
-	std::copy (iter, eof, std::back_inserter (sFile));
+	fin.close ();
 	
-	return true;
+	sFile.pop_back ();
+	UINT uiFileCode = WINCVT::DetectFileCode (sFile);
+	
+	if (uiFileCode == CODE_UTF8_BOM)
+	{
+		sFile = sFile.substr (3);
+		return true;
+	}
+	
+	std::wstring wsTemp;
+	
+	if (uiFileCode == CODE_UTF8)
+	{
+		if (WINCVT::StringToWString (wsTemp, sFile, CP_UTF8) &&
+			WINCVT::WStringToString (sFile, wsTemp, CP_UTF8))
+			return true;
+	
+		else
+			uiFileCode = CODE_ANSI;
+	}
+		
+	if (uiFileCode != CODE_ANSI)
+	{
+		bool isBE = uiFileCode == CODE_UNICODE_BE;
+		wchar_t wc = 0;
+		
+		for (unsigned i = 2; i < sFile.size (); i += 2)
+		{
+			wc = (unsigned char) sFile [i + !isBE] << 8 | (unsigned char) sFile [i + isBE];
+			wsTemp.append (1, wc);
+		}
+	}
+    
+    else if (!WINCVT::StringToWString (wsTemp, sFile, CP_ACP))
+    	return false;
+    
+	return WINCVT::WStringToString (sFile, wsTemp, CP_UTF8);
 }
 
 void POSTER::WinHttpPostCallBack (bool isSuccess)
