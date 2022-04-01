@@ -8,7 +8,7 @@ INIMANAGER* INIMANAGER::GetInstance ()
 
 bool INIMANAGER::Initialize (std::string sFolderPath)
 {
-	sFileName = sFolderPath + DEFAULT_ININAME;
+	sFileName = sFolderPath + "\\" + ININAME_SETUP;
 	
 	if (!~_access (sFileName.c_str (), 4))
 		if (!ExtractIniFromResource ())

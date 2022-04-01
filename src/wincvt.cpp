@@ -37,7 +37,7 @@ bool WINCVT::StringToWString (std::wstring& wsTarget, const std::string& sSource
     if (!(len = MultiByteToWideChar (CodePage, 0, sSource.c_str (), -1, NULL, 0)))
 		return WINREPORT ("MultiByteToWideChar"), false;
 			
-	wstr = new wchar_t [len + 1];
+	wstr = new wchar_t [(size_t) len + 1];
 		
 	if (!MultiByteToWideChar (CodePage, 0, sSource.c_str (), -1, wstr, len))
 	{
@@ -61,7 +61,7 @@ bool WINCVT::WStringToString (std::string& sTarget, const std::wstring& wsSource
 	if (!(len = WideCharToMultiByte (CodePage, 0, wsSource.c_str (), -1, NULL, 0, NULL, NULL)))
 		return WINREPORT ("WideCharToMultiByte"), false;
 		
-	str = new char [len + 1];
+	str = new char [(size_t) len + 1];
 			
 	if (!WideCharToMultiByte (CodePage, 0, wsSource.c_str (), -1, str, len, NULL, NULL))
 	{

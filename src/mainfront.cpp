@@ -440,14 +440,11 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 					
 	GetWindowTextA (hedtFilePath, cbuffer, MAX_PATHLEN); 
 	sFilePath = std::string ((const char*) cbuffer);
+	delete [] cbuffer;
 	
 	// Check the 'File path' field is empty	or not
 	if (sFilePath.length () == 0)
-	{
-		ALERT (LVWARN, "Please select a valid file!");
-		delete [] cbuffer;
-		return false;
-	}
+		return ALERT (LVWARN, "Please select a valid file!"), false;
 	
 	// Check the file is empty or not				
 	ULARGE_INTEGER uliFileSize;
@@ -455,13 +452,8 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 	uliFileSize.LowPart = GetCompressedFileSizeA (sFilePath.c_str (), &uliFileSize.HighPart);
 					
 	if (uliFileSize.QuadPart == 0)
-	{
-		ALERT (LVWARN, "This is an empty file!");
-		delete [] cbuffer;
-		return false;
-	}
-	
-	delete [] cbuffer;
+		return ALERT (LVWARN, "This is an empty file!"), false;
+
 	return true;
 }
 

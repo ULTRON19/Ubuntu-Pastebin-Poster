@@ -58,7 +58,6 @@ bool MAINMODULE::Initialize (HINSTANCE hInstance)
 	if (GetCmdFilePath (wsFilePath))
 		pMainFront -> SetFilePath (wsFilePath);
 	
-//	pMainFront -> SetComboBoxItem (lstDefaultSyntax, lstDefaultExpiration);
 	pMainFront -> SetRightMenu (pRegistrant -> GetStatus ());
 	
 	// Set callback

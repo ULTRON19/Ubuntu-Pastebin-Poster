@@ -11,6 +11,7 @@ Ubuntu Pastebin Poster is a widget that submits code to <https://paste.ubuntu.co
 * Automatically copy links to clipboard after posting (v1.0.1+)
 * Identify the corresponding programming language based on the file extension (v1.0.1+)
 * Arrange drop-down lists based on user preferences (v1.0.1+)
+* Support ANSI, UTF-16 LE, UTF-16 BE and UTF-8 encoding (v1.0.2+)
 
 ## Requirements
 | Name | Options |

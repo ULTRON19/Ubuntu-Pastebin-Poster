@@ -160,7 +160,7 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 	
 	sFile.clear ();
 	
-	for (char c; !fin.eof (); sFile.append (1, c))
+	for (char c = 0; !fin.eof (); sFile.append (1, c))
 		fin.read (&c, 1);
 	
 	fin.close ();
@@ -193,7 +193,7 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 		
 		for (unsigned i = 2; i < sFile.size (); i += 2)
 		{
-			wc = (unsigned char) sFile [i + !isBE] << 8 | (unsigned char) sFile [i + isBE];
+			wc = (unsigned char) sFile [(size_t) i + !isBE] << 8 | (unsigned char) sFile [(size_t) i + isBE];
 			wsTemp.append (1, wc);
 		}
 	}

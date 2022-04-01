@@ -1,7 +1,7 @@
 #ifndef __INIMANAGER__
 #define __INIMANAGER__
 
-#define DEFAULT_ININAME		"\\setup.ini"
+#define ININAME_SETUP		"setup.ini"
 
 #include <algorithm>
 

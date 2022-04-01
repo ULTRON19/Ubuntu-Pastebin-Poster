@@ -101,7 +101,7 @@ void LOGGER::Alert (const char* pcErrMsg)
 
 void LOGGER::BalloonTip (HWND hControl, const wchar_t* pszMsg)
 {
-	EDITBALLOONTIP editTip;
+	EDITBALLOONTIP editTip = {0};
 	
 	editTip.cbStruct = sizeof (EDITBALLOONTIP);
 	editTip.pszText = pszMsg;
