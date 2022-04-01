@@ -206,7 +206,7 @@ bool RESMANAGER::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindo
 	
 	// If the control is a edit box
 	// Adjust the area so the text is at a distance from the border
-	if (strcmp (lpClassName, WC_EDITA) == 0)
+	if (!strcmp (lpClassName, WC_EDITA))
 	{
 		RECT rect;
 		GetWindowRect (hControl, &rect);
@@ -215,5 +215,24 @@ bool RESMANAGER::InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindo
 		SendMessage (hControl, EM_SETRECT, 0, (LPARAM) &rect);
 	}
 	
+	return true;
+}
+
+bool RESMANAGER::InitToolTips (HWND& hToolTips, HWND hControl, HWND hWndParent, DWORD dwStyle, 
+	DWORD dwIndexFont, DWORD dwIndexCursor, UINT uTipsFlags, LPCSTR lpTipsText)
+{
+	if (!InitControl (hToolTips, TOOLTIPS_CLASSA, NULL, dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, 
+		CW_USEDEFAULT, CW_USEDEFAULT, hWndParent, 0, dwIndexFont, dwIndexCursor))
+		return false;
+	
+	TTTOOLINFOA toolInfo = {0};
+	
+	toolInfo.cbSize = sizeof toolInfo;
+	toolInfo.hwnd = hWndParent;
+	toolInfo.uFlags = uTipsFlags;
+	toolInfo.uId = (UINT_PTR) hControl;
+	toolInfo.lpszText = const_cast <LPSTR> (lpTipsText);
+	
+	SendMessage (hToolTips, TTM_ADDTOOL, 0, (LPARAM) &toolInfo);
 	return true;
 }

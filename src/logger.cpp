@@ -73,22 +73,22 @@ void LOGGER::Alert (const char* pcErrMsg)
 	switch (loggerLevel)
 	{
 		case LVINFO:
-			pcCaption = CAPTION_INFO;
+			pcCaption = STRING_INFO;
 			uType |= MB_ICONINFORMATION;
 			break;
 			
 		case LVDEBUG:
-			pcCaption = CAPTION_DEBUG;
+			pcCaption = STRING_DEBUG;
 			uType |= MB_ICONINFORMATION;
 			break;
 		
 		case LVWARN:
-			pcCaption = CAPTION_WARN;
+			pcCaption = STRING_WARN;
 			uType |= MB_ICONWARNING;
 			break;
 		
 		case LVERROR:
-			pcCaption = CAPTION_ERROR;
+			pcCaption = STRING_ERROR;
 			uType |= MB_ICONERROR;
 			break;
 			
@@ -97,6 +97,41 @@ void LOGGER::Alert (const char* pcErrMsg)
 	
 	// Create a pop-up window
 	MessageBoxA (hwndGlobal, pcErrMsg, pcCaption, uType);
+}
+
+void LOGGER::BalloonTip (HWND hControl, const wchar_t* pszMsg)
+{
+	EDITBALLOONTIP editTip;
+	
+	editTip.cbStruct = sizeof (EDITBALLOONTIP);
+	editTip.pszText = pszMsg;
+	
+	switch (loggerLevel)
+	{
+		case LVINFO:
+			editTip.ttiIcon = TTI_INFO;
+			editTip.pszTitle = WSTRING_INFO;
+			break;
+			
+		case LVDEBUG:
+			editTip.ttiIcon = TTI_NONE;
+			editTip.pszTitle = WSTRING_DEBUG;
+			break;
+		
+		case LVWARN:
+			editTip.ttiIcon = TTI_WARNING;
+			editTip.pszTitle = WSTRING_WARN;
+			break;
+		
+		case LVERROR:
+			editTip.ttiIcon = TTI_ERROR;
+			editTip.pszTitle = WSTRING_ERROR;
+			break;
+			
+		default: break;
+	}
+	
+	Edit_ShowBalloonTip (hControl, &editTip);
 }
 
 void LOGGER::GetTime (std::ostream& os)

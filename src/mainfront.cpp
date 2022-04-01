@@ -5,6 +5,7 @@ MAINFRONT::MAINFRONT ():
 	hedtPoster (nullptr), hedtFilePath (nullptr), hedtURL (nullptr),
 	hcbxSyntax (nullptr), hcbxExpiration (nullptr),
 	hbtnPost (nullptr), hbtnRightMenu (nullptr),
+	httsPoster (nullptr), httsSyntax (nullptr), httsExpiration (nullptr), httsFilePath (nullptr), httsURL (nullptr),
 	postCallBack (nullptr), rightmenuCallBack (nullptr)
 {	
 }
@@ -75,6 +76,27 @@ bool MAINFRONT::Initialize ()
 		
 	if (!pResManager -> InitControl (hbtnRightMenu, WC_BUTTONA, "Add to the right-mouse menu (Administrator privileges required)", 
 		WS_CHILD | WS_VISIBLE | BS_CHECKBOX, 30, 165, 500, 25, hwnd, INDEX_BTNRIGHTMENU, FONT_UBUNTU, CURSOR_UPARROW))
+		return false;
+		
+	// Initialize tool tips
+	if (!pResManager -> InitToolTips (httsPoster, hedtPoster, hwnd, DEFAULT_STOOLTIPS, 0, CURSOR_ARROW, 
+		TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT, "Your name (30 characters max)"))
+		return false;
+		
+	if (!pResManager -> InitToolTips (httsSyntax, hcbxSyntax, hwnd, DEFAULT_STOOLTIPS, 0, CURSOR_ARROW, 
+		TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT, "The programming language of the file"))
+		return false;
+	
+	if (!pResManager -> InitToolTips (httsExpiration, hcbxExpiration, hwnd, DEFAULT_STOOLTIPS, 0, CURSOR_ARROW, 
+		TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT, "Duration of the URL"))
+		return false;
+	
+	if (!pResManager -> InitToolTips (httsFilePath, hedtFilePath, hwnd, DEFAULT_STOOLTIPS, 0, CURSOR_ARROW, 
+		TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT, "The path to the file you want to post"))
+		return false;
+	
+	if (!pResManager -> InitToolTips (httsURL, hedtURL, hwnd, DEFAULT_STOOLTIPS, 0, CURSOR_ARROW, 
+		TTF_IDISHWND | TTF_SUBCLASS | TTF_TRANSPARENT, "You can view your code through this URL"))
 		return false;
 		
 	SetBoxItem ();
@@ -227,7 +249,8 @@ LRESULT MAINFRONT::proxyMainProc (HWND hwnd, UINT Message, WPARAM wParam, LPARAM
 							{
 								pwcBuffer [MAX_CHARACTER] = 0;
 								SetWindowTextW (hedtPoster, pwcBuffer);
-								SendMessageW (hedtPoster, EM_SETSEL, 0, -1);
+								SendMessageW (hedtPoster, EM_SETSEL, MAX_CHARACTER, 0);
+								TIP (LVWARN, hedtPoster, L"You can only enter 30 characters at most!");
 							}
 							
 							std::string sPoster;
@@ -400,7 +423,7 @@ bool MAINFRONT::CollectForm (std::string& sPoster, unsigned int& uiSyntax, unsig
 	// Check the 'Poster' field is empty or not
 	if (sPoster.length () == 0)
 	{
-		ALERT (LVWARN, "Please fill out 'Poster' field!");
+		TIP (LVWARN, hedtPoster, L"Please fill out this field!");
 		delete [] cbuffer;
 		return false;
 	}
@@ -559,6 +582,11 @@ void MAINFRONT::DisableAllControls ()
 	EnableWindow (hedtURL, false);
 	EnableWindow (hbtnPost, false);
 	EnableWindow (hbtnRightMenu, false);
+	EnableWindow (httsPoster, false);
+	EnableWindow (httsSyntax, false);
+	EnableWindow (httsExpiration, false);
+	EnableWindow (httsFilePath, false);
+	EnableWindow (httsURL, false);
 }
 
 void MAINFRONT::EnableAllControls ()
@@ -571,6 +599,11 @@ void MAINFRONT::EnableAllControls ()
 	EnableWindow (hedtURL, true);   
 	EnableWindow (hbtnPost, true);
 	EnableWindow (hbtnRightMenu, true);
+	EnableWindow (httsPoster, true);
+	EnableWindow (httsSyntax, true);
+	EnableWindow (httsExpiration, true);
+	EnableWindow (httsFilePath, true);
+	EnableWindow (httsURL, true);
 }
 
 void MAINFRONT::ZeroAllControls ()
@@ -590,5 +623,11 @@ void MAINFRONT::ZeroAllControls ()
 	
 	hbtnPost = nullptr;
 	hbtnRightMenu = nullptr;
+	
+	httsPoster = nullptr;
+	httsSyntax = nullptr;
+	httsExpiration = nullptr;
+	httsFilePath = nullptr;
+	httsURL = nullptr;
 }
 

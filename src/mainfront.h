@@ -68,6 +68,8 @@ private:
 	HWND hcbxSyntax, hcbxExpiration;
 	// Button control handle
 	HWND hbtnPost, hbtnRightMenu;
+	// Tool tips handle
+	HWND httsPoster, httsSyntax, httsExpiration, httsFilePath, httsURL;
 	
 	// Callback
 	std::function <bool (std::string, std::string, std::string, std::string)> postCallBack;

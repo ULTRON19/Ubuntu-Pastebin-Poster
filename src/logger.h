@@ -7,6 +7,7 @@
 #include <string>
 #include <ctime>
 #include <windows.h>
+#include <commctrl.h>
 #include <io.h>
 
 #define LVINFO			0
@@ -19,14 +20,20 @@
 #define LOGNAME_WARN	"WarnReport.log"
 #define LOGNAME_ERROR	"ErrorReport.log"
 
-#define CAPTION_INFO	"Info"
-#define CAPTION_DEBUG	"Debug"
-#define CAPTION_WARN	"Warn"
-#define CAPTION_ERROR	"Error"
+#define STRING_INFO		"Info"
+#define STRING_DEBUG	"Debug"
+#define STRING_WARN		"Warning"
+#define STRING_ERROR	"Error"
+
+#define WSTRING_INFO	L"Info"
+#define WSTRING_DEBUG	L"Debug"
+#define WSTRING_WARN	L"Warning"
+#define WSTRING_ERROR	L"Error"
 
 #define REPORT(LEVEL,MSG) LOGGER (LEVEL).Report (__FUNCTION__, MSG)
 #define RECORD(LEVEL,MSG) LOGGER (LEVEL).Record (__FUNCTION__, MSG)
 #define ALERT(LEVEL,MSG) LOGGER (LEVEL).Alert (MSG)
+#define TIP(LEVEL,WND,MSG) LOGGER (LEVEL).BalloonTip (WND, MSG)
 
 class LOGGER
 {
@@ -39,6 +46,7 @@ public:
 	void Report (const char* pcFunc, const char* pcErrMsg);
 	void Record (const char* pcFunc, const char* pcErrMsg);
 	void Alert (const char* pcErrMsg);
+	void BalloonTip (HWND hControl, const wchar_t* pszText);
 	
 private:
 	static std::string sFolderPath;

@@ -46,6 +46,7 @@
 #define DEFAULT_SEDIT			(WS_CHILD | WS_VISIBLE | WS_BORDER | BS_TEXT | ES_MULTILINE | ES_AUTOHSCROLL)
 #define DEFAULT_SCOMBOBOX		(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | CBS_DISABLENOSCROLL | CBS_DROPDOWNLIST)
 #define DEFAULT_SBUTTON			(WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | BS_DEFPUSHBUTTON)
+#define DEFAULT_STOOLTIPS		(WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -78,6 +79,9 @@ public:
 	// Initialize control
 	bool InitControl (HWND& hControl, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y,
 		int nWidth, int nHeight, HWND hWndParent, int hIndex, DWORD dwIndexFont, DWORD dwIndexCursor);
+		
+	bool InitToolTips (HWND& hToolTips, HWND hControl, HWND hWndParent, DWORD dwStyle, 
+		DWORD dwIndexFont, DWORD dwIndexCursor, UINT uTipsFlags, LPCSTR lpTipsText);
 
 	~RESMANAGER ();
 	
