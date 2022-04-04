@@ -1,16 +1,15 @@
-#include "httpclient.h"
+#include "winhttprequest.h"
 
-std::queue <std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)>> HTTPCLIENT::qAsyncOperation;
+std::queue <std::pair <WINHTTPREQUEST*, bool (WINHTTPREQUEST::*) (void)>> WINHTTPREQUEST::qAsyncOperation;
 
-HTTPCLIENT::HTTPCLIENT ():
+WINHTTPREQUEST::WINHTTPREQUEST ():
 	hSession (nullptr), hConnect (nullptr), hRequest (nullptr),
-	requestCallBack (nullptr),
-	isAsync (false),
+	isAsync (false), requestCallBack (nullptr),
 	pszOutBuffer (nullptr), dwSize (0)
 {
 }
 
-HTTPCLIENT::~HTTPCLIENT ()
+WINHTTPREQUEST::~WINHTTPREQUEST ()
 {
 	if (pszOutBuffer)
 	{
@@ -19,41 +18,30 @@ HTTPCLIENT::~HTTPCLIENT ()
 	}
 	
 	CloseRequest ();
-	CloseConnect ();
-	CloseHttp ();
+	UnInitialize ();
 }
 
-bool HTTPCLIENT::OpenHttp (LPCWSTR pszAgentW, DWORD dwAccessType, LPCWSTR pszProxyW, LPCWSTR pszProxyBypassW, DWORD dwFlags)
+bool WINHTTPREQUEST::Initialize (LPCWSTR pszAgentW, LPCWSTR pswzServerName, INTERNET_PORT nServerPort, bool _isAsync)
 {
-	if (hSession)
+	if (hSession || hConnect)
 		return false;
 	
-	// Use WinHttpOpen to obtain a session handle.
-	// Set asynchronous mode by checking dwFlags
-	hSession = WinHttpOpen (pszAgentW, dwAccessType, pszProxyW, pszProxyBypassW, dwFlags);
-	
-	if (!hSession)
+	// Set proxy and secure to none
+	if (!(hSession = WinHttpOpen (pszAgentW, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 
+		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, _isAsync ? WINHTTP_FLAG_ASYNC : NULL)))
 		return HTTPREPORT ("WinHttpOpen"), false;
 		
-	isAsync = dwFlags & WINHTTP_FLAG_ASYNC;
-	return true;
-}
-
-bool HTTPCLIENT::ConnectHttp (LPCWSTR pswzServerName, INTERNET_PORT nServerPort)
-{
-	if (!hSession || hConnect)
-		return false;
+	isAsync = _isAsync;
 	
-	// Specify an HTTP server
-	hConnect = WinHttpConnect (hSession, pswzServerName, nServerPort, 0);
-	
-	if (!hConnect)
+	if (!(hConnect = WinHttpConnect (hSession, pswzServerName, nServerPort, 0)))
 		return HTTPREPORT ("WinHttpConnect"), false;
+		
+	wsRequestServer = std::wstring (pswzServerName);
 	
 	return true;
 }
 
-bool HTTPCLIENT::OpenRequest (LPCWSTR pwszVerb, LPCWSTR pwszObjectName, LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR *ppwszAcceptTypes, DWORD dwFlags)
+bool WINHTTPREQUEST::OpenRequest (LPCWSTR pwszVerb, LPCWSTR pwszObjectName, LPCWSTR pwszVersion, LPCWSTR pwszReferrer, LPCWSTR *ppwszAcceptTypes, DWORD dwFlags)
 {
 	if (!hSession || !hConnect || hRequest)
 		return false;
@@ -62,11 +50,125 @@ bool HTTPCLIENT::OpenRequest (LPCWSTR pwszVerb, LPCWSTR pwszObjectName, LPCWSTR 
 	
 	if (!hRequest)
 		return HTTPREPORT ("WinHttpOpenRequest"), false;
+		
+	wsRequestUrl = (dwFlags & WINHTTP_FLAG_SECURE) ? L"https://" : L"http://";
+	wsRequestUrl += wsRequestServer + pwszObjectName;
 	
 	return true;
 }
 
-bool HTTPCLIENT::AddHeader (WSPIRLIST listHeader, DWORD dwModifiers)
+bool WINHTTPREQUEST::UseIEProxy ()
+{
+	WINHTTP_CURRENT_USER_IE_PROXY_CONFIG ieProxyConfig = {0};
+	
+	if (!WinHttpGetIEProxyConfigForCurrentUser (&ieProxyConfig))
+		return HTTPREPORT ("WinHttpGetIEProxyConfigForCurrentUser"), false;
+		
+	if (ieProxyConfig.lpszProxy)
+	{
+		bool res = UseCustomProxy (WINHTTP_ACCESS_TYPE_NAMED_PROXY, 
+			ieProxyConfig.lpszProxy, ieProxyConfig.lpszProxyBypass);
+			
+		GlobalFree (ieProxyConfig.lpszProxy);
+		
+		if (ieProxyConfig.lpszProxyBypass)
+			GlobalFree (ieProxyConfig.lpszProxyBypass);
+		
+		if (res)
+			return true;
+	}
+	
+	if (ieProxyConfig.lpszAutoConfigUrl)
+	{
+		WINHTTP_AUTOPROXY_OPTIONS autoProxyOptions = {0};
+		WINHTTP_PROXY_INFO wpiProxyInfo = {0};
+		bool res = false;
+	
+		autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_CONFIG_URL;
+		autoProxyOptions.lpszAutoConfigUrl = ieProxyConfig.lpszAutoConfigUrl;
+		autoProxyOptions.fAutoLogonIfChallenged = true;
+		
+		if (!(res = WinHttpGetProxyForUrl (hSession, wsRequestUrl.c_str (), &autoProxyOptions, &wpiProxyInfo)))
+			HTTPREPORT ("WinHttpGetProxyForUrl");
+			
+		else
+			res = UseCustomProxy (wpiProxyInfo);
+		
+		if (wpiProxyInfo.lpszProxy)
+			GlobalFree (wpiProxyInfo.lpszProxy);
+			
+		if (wpiProxyInfo.lpszProxyBypass)
+			GlobalFree (wpiProxyInfo.lpszProxyBypass);
+		
+		GlobalFree (ieProxyConfig.lpszAutoConfigUrl);
+		
+		if (res)
+			return true;
+	}
+	
+	if (ieProxyConfig.fAutoDetect)
+	{
+		WINHTTP_AUTOPROXY_OPTIONS autoProxyOptions = {0};
+		WINHTTP_PROXY_INFO wpiProxyInfo = {0};
+		bool res = false;
+		
+		autoProxyOptions.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+		
+		// Use DHCP and DNS-based auto-detection.
+		autoProxyOptions.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP |
+			WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+		
+		// If obtaining the PAC script requires NTLM/Negotiate
+		// authentication, then automatically supply the client
+		// domain credentials.
+		autoProxyOptions.fAutoLogonIfChallenged = true;
+		
+		if (!(res = WinHttpGetProxyForUrl (hSession, wsRequestUrl.c_str (), &autoProxyOptions, &wpiProxyInfo)))
+			HTTPREPORT ("WinHttpGetProxyForUrl");
+			
+		else
+			res = UseCustomProxy (wpiProxyInfo);
+		
+		if (wpiProxyInfo.lpszProxy)
+			GlobalFree (wpiProxyInfo.lpszProxy);
+			
+		if (wpiProxyInfo.lpszProxyBypass)
+			GlobalFree (wpiProxyInfo.lpszProxyBypass);
+		
+		if (res)
+			return true;
+	}
+	
+	return false;
+}
+
+bool WINHTTPREQUEST::UseCustomProxy (WINHTTP_PROXY_INFO wpiProxyInfo)
+{
+	if (!WinHttpSetOption (hSession, WINHTTP_OPTION_PROXY, &wpiProxyInfo, sizeof wpiProxyInfo))
+		return HTTPREPORT ("WinHttpSetOption"), false;
+		
+	return true; 
+}
+
+bool WINHTTPREQUEST::UseCustomProxy (DWORD dwAccessType, LPWSTR lpszProxy, LPWSTR lpszProxyBypass)
+{
+	return UseCustomProxy ({dwAccessType, lpszProxy, lpszProxyBypass});
+}
+
+bool WINHTTPREQUEST::SetProxyUserInfo (LPCSTR pszUserName, LPCSTR pszUserPassword)
+{
+	if (!WinHttpSetOption (hRequest, WINHTTP_OPTION_PROXY_USERNAME, 
+		const_cast <LPSTR> (pszUserName), lstrlenA (pszUserName)))
+		return HTTPREPORT ("WinHttpSetOption"), false;
+		
+	if (!WinHttpSetOption (hRequest, WINHTTP_OPTION_PROXY_PASSWORD, 
+		const_cast <LPSTR> (pszUserPassword), lstrlenA (pszUserPassword)))
+		return HTTPREPORT ("WinHttpSetOption"), false;
+		
+	return true;
+}
+
+bool WINHTTPREQUEST::AddHeader (WSPIRLIST listHeader, DWORD dwModifiers)
 {	
 	if (!hRequest)
 		return false;
@@ -83,44 +185,44 @@ bool HTTPCLIENT::AddHeader (WSPIRLIST listHeader, DWORD dwModifiers)
 	return true;
 }
 
-bool HTTPCLIENT::AddContent (DWORD dwContentType, SPIRLIST listContent, std::string sBoundary)
+bool WINHTTPREQUEST::AddContent (DWORD dwContentType, SPIRLIST listContent, std::string sBoundary)
 {
 	if (!hRequest)
 		return false;
 	
-	sRequest.clear ();
+	sRequestBody.clear ();
 	
 	if (dwContentType == XWWWFORMURLENCODED)
 		for (auto I = listContent.begin (); I != listContent.end (); I ++)
 		{
-			sRequest += I -> first + "=" + I -> second;
+			sRequestBody += I -> first + "=" + I -> second;
 			
 			if (I != listContent.end () - 1)
-				sRequest += "&";
+				sRequestBody += "&";
 		}
 	
 	else
 	{
 		for (auto& pir: listContent)
 		{
-			sRequest += "--" + sBoundary + "\r\n";
-			sRequest += "Content-Disposition: form-data; ";
-			sRequest += "name=\"" + pir.first + "\"\r\n\r\n";
-			sRequest += pir.second + "\r\n";
+			sRequestBody += "--" + sBoundary + "\r\n";
+			sRequestBody += "Content-Disposition: form-data; ";
+			sRequestBody += "name=\"" + pir.first + "\"\r\n\r\n";
+			sRequestBody += pir.second + "\r\n";
 		}
 		
-		sRequest += "\r\n--" + sBoundary + "\r\n";
+		sRequestBody += "\r\n--" + sBoundary + "\r\n";
 	}
 	
 	return true;
 }
 
-void HTTPCLIENT::ClearContent ()
+void WINHTTPREQUEST::ClearContent ()
 {
-	sRequest.clear ();
+	sRequestBody.clear ();
 }
 
-bool HTTPCLIENT::SendRequest ()
+bool WINHTTPREQUEST::SendRequest ()
 {
 	if (!hRequest)
 		return false;
@@ -132,7 +234,7 @@ bool HTTPCLIENT::SendRequest ()
 			return false;
 		
 		if (!WinHttpSendRequest (hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA,
-			0, (DWORD) sRequest.length (), reinterpret_cast <DWORD_PTR> (this)))
+			0, (DWORD) sRequestBody.length (), reinterpret_cast <DWORD_PTR> (this)))
 			return HTTPREPORT ("WinHttpSendRequest"), false;
 			
 		return true;
@@ -147,7 +249,7 @@ bool HTTPCLIENT::SendRequest ()
 		
 		// no retry on success, possible retry on failure
 		if (!(res = WinHttpSendRequest (hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 
-			0, (DWORD) sRequest.length (), 0)))
+			0, (DWORD) sRequestBody.length (), 0)))
 		{
 			int errMsg = GetLastError ();
 			
@@ -178,19 +280,22 @@ bool HTTPCLIENT::SendRequest ()
     return res;
 }
 
-bool HTTPCLIENT::SendData ()
+bool WINHTTPREQUEST::SendData ()
 {
-	if (!hRequest || sRequest.empty ())
+	if (!hRequest)
 		return false;
+	
+	if (sRequestBody.empty ())
+		return true;
 		
 	DWORD dwBytesWritten = 0;
-	if (!WinHttpWriteData (hRequest, sRequest.c_str (), (DWORD) sRequest.length (), isAsync ? nullptr : &dwBytesWritten))
+	if (!WinHttpWriteData (hRequest, sRequestBody.c_str (), (DWORD) sRequestBody.length (), isAsync ? nullptr : &dwBytesWritten))
 		return HTTPREPORT ("WinHttpWriteData"), false;
 
 	return true;
 }
 
-bool HTTPCLIENT::ReceiveResponse ()
+bool WINHTTPREQUEST::ReceiveResponse ()
 {
 	if (!hRequest)
 		return false;
@@ -201,7 +306,7 @@ bool HTTPCLIENT::ReceiveResponse ()
 	return true;
 }
 
-bool HTTPCLIENT::QueryDataAvaliable ()
+bool WINHTTPREQUEST::QueryDataAvaliable ()
 {
 	if (!hRequest)
 		return false;
@@ -213,7 +318,7 @@ bool HTTPCLIENT::QueryDataAvaliable ()
 	return true;
 }
 
-bool HTTPCLIENT::ReadData ()
+bool WINHTTPREQUEST::ReadData ()
 {
 	if (!hRequest)
 		return false;
@@ -250,7 +355,7 @@ bool HTTPCLIENT::ReadData ()
 			return HTTPREPORT ("WinHttpReadData"), false;
 
 		else
-			sResponse += std::string (pszOutBuffer);
+			sResponseBody += std::string (pszOutBuffer);
 		
 		ClearBuffer ();
 	}
@@ -259,7 +364,7 @@ bool HTTPCLIENT::ReadData ()
 	return true;
 }
 
-bool HTTPCLIENT::ReadHeader (DWORD dwInfoLevel, LPCWSTR pwszName, LPDWORD lpdwIndex, std::wstring& wsOutBuffer)
+bool WINHTTPREQUEST::ReadHeader (DWORD dwInfoLevel, LPCWSTR pwszName, LPDWORD lpdwIndex, std::wstring& wsOutBuffer)
 {
 	if (!hRequest)
 		return false;
@@ -286,18 +391,17 @@ bool HTTPCLIENT::ReadHeader (DWORD dwInfoLevel, LPCWSTR pwszName, LPDWORD lpdwIn
 	return false;
 }
 
-void HTTPCLIENT::MoveResponseData (std::string& sOutBuffer)
+void WINHTTPREQUEST::MoveResponseData (std::string& sOutBuffer)
 {
-	sOutBuffer = std::move (sResponse);
-	sResponse.clear ();
+	sOutBuffer = std::move (sResponseBody);
+	sResponseBody.clear ();
 }
 
-bool HTTPCLIENT::AsyncOperate (bool (HTTPCLIENT::*operation) (void))
+bool WINHTTPREQUEST::AsyncOperate (bool (WINHTTPREQUEST::*operation) (void))
 {
-	if (operation == &HTTPCLIENT::CloseHttp ||
-		operation == &HTTPCLIENT::CloseConnect ||
-		operation == &HTTPCLIENT::CloseRequest)
-			return false;
+	if (operation == &WINHTTPREQUEST::UnInitialize ||
+		operation == &WINHTTPREQUEST::CloseRequest)
+		return false;
 	
 	qAsyncOperation.push ({this, operation});
 	
@@ -314,7 +418,7 @@ bool HTTPCLIENT::AsyncOperate (bool (HTTPCLIENT::*operation) (void))
 	return true;
 }
 
-bool HTTPCLIENT::SetOption (DWORD dwOption, DWORD dwFlags)
+bool WINHTTPREQUEST::SetOption (DWORD dwOption, DWORD dwFlags)
 {
 	if (!hRequest)
 		return false;
@@ -325,12 +429,12 @@ bool HTTPCLIENT::SetOption (DWORD dwOption, DWORD dwFlags)
 	return true;
 }
 
-void HTTPCLIENT::SetRequestCallBack (std::function <void (DWORD, LPVOID, DWORD)> cbRequest)
+void WINHTTPREQUEST::SetRequestCallBack (std::function <void (DWORD, LPVOID, DWORD)> cbRequest)
 {
 	requestCallBack = cbRequest;
 }
 
-void HTTPCLIENT::RemoveRequestCallBack ()
+void WINHTTPREQUEST::RemoveRequestCallBack ()
 {
 	if (!requestCallBack)
 		return;
@@ -342,31 +446,25 @@ void HTTPCLIENT::RemoveRequestCallBack ()
 		HTTPREPORT ("WinHttpSetStatusCallback");
 }
 
-bool HTTPCLIENT::CloseHttp ()
+bool WINHTTPREQUEST::UnInitialize ()
 {
-	if (!hSession)
+	if (!hSession && !hConnect)
 		return true;
 	
-	if (!WinHttpCloseHandle (hSession))
+	if (hSession && !WinHttpCloseHandle (hSession))
 		return HTTPRECORD ("WinHttpCloseHandle"), false;
 	
 	hSession = nullptr;
-	return true;
-}
-
-bool HTTPCLIENT::CloseConnect ()
-{
-	if (!hConnect)
-		return true;
 	
-	if (!WinHttpCloseHandle (hConnect))
+	if (hConnect && !WinHttpCloseHandle (hConnect))
 		return HTTPRECORD ("WinHttpCloseHandle"), false;
 	
 	hConnect = nullptr;
+	
 	return true;
 }
 
-bool HTTPCLIENT::CloseRequest ()
+bool WINHTTPREQUEST::CloseRequest ()
 {
 	if (!hRequest)
 		return true;
@@ -380,7 +478,7 @@ bool HTTPCLIENT::CloseRequest ()
 	return true;
 }
 
-void HTTPCLIENT::ClearBuffer ()
+void WINHTTPREQUEST::ClearBuffer ()
 {
 	if (!pszOutBuffer)
 		return;
@@ -389,40 +487,40 @@ void HTTPCLIENT::ClearBuffer ()
 	pszOutBuffer = nullptr;
 }
 
-void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR dwContext, 
+void CALLBACK WINHTTPREQUEST::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR dwContext, 
 	DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
 {
 	if (dwContext)
 	{
-		HTTPCLIENT* pHttpClient = reinterpret_cast <HTTPCLIENT*> (dwContext);
+		WINHTTPREQUEST* pWinHttpRequest = reinterpret_cast <WINHTTPREQUEST*> (dwContext);
 		
 		switch (dwInternetStatus)
 		{
 			// It's needed to clear buffer when an error occurred
 			case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR:
-				pHttpClient -> ClearBuffer ();
+				pWinHttpRequest -> ClearBuffer ();
 				break;
 				
 			// Outputs the contents of the buffer to the response data and clear buffer
 			case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
-				pHttpClient -> sResponse += std::string (pHttpClient -> pszOutBuffer);
-				pHttpClient -> ClearBuffer ();
+				pWinHttpRequest -> sResponseBody += std::string (pWinHttpRequest -> pszOutBuffer);
+				pWinHttpRequest -> ClearBuffer ();
 				break;
 			
 			// Update dwSize when query data available succeed
 			case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:
-				pHttpClient -> dwSize = dwStatusInformationLength;
+				pWinHttpRequest -> dwSize = dwStatusInformationLength;
 				break;
 				
 			default:
 				break;
 		}
 		
-		if (pHttpClient -> requestCallBack)
-			pHttpClient -> requestCallBack (dwInternetStatus, lpvStatusInformation, dwStatusInformationLength);
+		if (pWinHttpRequest -> requestCallBack)
+			pWinHttpRequest -> requestCallBack (dwInternetStatus, lpvStatusInformation, dwStatusInformationLength);
 	
 		// Get the next operation if the current operation is asynchronous
-		if (pHttpClient -> isAsync)
+		if (pWinHttpRequest -> isAsync)
 			switch (dwInternetStatus)
 			{
 				case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR:
@@ -434,7 +532,7 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 				{
 					bool bIsNotSkip = true;
 					
-					HTTPCLIENT* pLastClient = qAsyncOperation.front ().first;
+					WINHTTPREQUEST* pLastClient = qAsyncOperation.front ().first;
 					qAsyncOperation.pop ();
 
 					do
@@ -443,12 +541,12 @@ void CALLBACK HTTPCLIENT::WinHttpGlobalCallBack (HINTERNET hInternet, DWORD_PTR 
 						
 						if (!qAsyncOperation.empty ())
 						{
-							std::pair <HTTPCLIENT*, bool (HTTPCLIENT::*) (void)> pirOperation = qAsyncOperation.front ();
-							HTTPCLIENT* pNextClient = pirOperation.first;
-							bool (HTTPCLIENT:: * pNextOperation) (void) = pirOperation.second;
+							std::pair <WINHTTPREQUEST*, bool (WINHTTPREQUEST::*) (void)> pirOperation = qAsyncOperation.front ();
+							WINHTTPREQUEST* pNextClient = pirOperation.first;
+							bool (WINHTTPREQUEST::* pNextOperation) (void) = pirOperation.second;
 						
 							if (pLastClient != pNextClient)
-								if (WinHttpSetStatusCallback (pNextClient-> hRequest, WinHttpGlobalCallBack,
+								if (WinHttpSetStatusCallback (pNextClient -> hRequest, WinHttpGlobalCallBack,
 									WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)
 								{
 									HTTPREPORT ("WinHttpSetStatusCallback");

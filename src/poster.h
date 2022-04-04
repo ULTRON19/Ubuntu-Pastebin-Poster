@@ -11,7 +11,7 @@
 #include <iterator>
 
 #include "wincvt.h"
-#include "httpclient.h"
+#include "winhttprequest.h"
 
 class POSTER
 {
@@ -39,10 +39,10 @@ private:
 	
 	// CallBack function
 	void WinHttpStatusCallBack (DWORD dwInternetStatus, LPVOID lpvStatusInformation, DWORD dwStatusInformationLength);
-	void WinHttpPostCallBack (bool isSuccess);
+	void WinHttpPostCompleteHandle (bool isSuccess);
 	
 	// Http client
-	HTTPCLIENT* pHttpClient;
+	WINHTTPREQUEST* pWinHttpRequest;
 	
 	// Call back
 	std::function <void (std::wstring)> postcompleteCallBack;

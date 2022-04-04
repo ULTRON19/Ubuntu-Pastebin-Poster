@@ -3,7 +3,7 @@
 #include <fstream>
 
 POSTER::POSTER ():
-	pHttpClient (nullptr)
+	pWinHttpRequest (nullptr)
 {
 }
 
@@ -36,39 +36,39 @@ void POSTER::WinHttpStatusCallBack (DWORD dwInternetStatus, LPVOID lpvStatusInfo
 				// If you want to allow SSL certificate errors and continue with
             	// the connection, you must allow and initial failure and then
             	// reset the security flags. 
-            	if (pHttpClient -> SetOption (WINHTTP_OPTION_SECURITY_FLAGS, 
+            	if (pWinHttpRequest -> SetOption (WINHTTP_OPTION_SECURITY_FLAGS, 
 					SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID |
                     SECURITY_FLAG_IGNORE_CERT_CN_INVALID | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE))
             	{
-            		if (!pHttpClient -> AsyncOperate (&HTTPCLIENT::SendRequest))
-						WinHttpPostCallBack (false);
+            		if (!pWinHttpRequest -> AsyncOperate (&WINHTTPREQUEST::SendRequest))
+						WinHttpPostCompleteHandle (false);
 				}
 				else
-					WinHttpPostCallBack (false);
+					WinHttpPostCompleteHandle (false);
 				
 				bSSLError = false;
 			}
 			else
-				WinHttpPostCallBack (false);
+				WinHttpPostCompleteHandle (false);
 				
 			break;
 		}
 		
 		// Send requeset succeed, go to next step	
 		case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
-			if (!pHttpClient -> AsyncOperate (&HTTPCLIENT::SendData))
-				WinHttpPostCallBack (false);
+			if (!pWinHttpRequest -> AsyncOperate (&WINHTTPREQUEST::SendData))
+				WinHttpPostCompleteHandle (false);
 			break;
 		
 		// Send data succeed, go to next step
 		case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:
-			if (!pHttpClient -> AsyncOperate (&HTTPCLIENT::ReceiveResponse))
-				WinHttpPostCallBack (false);
+			if (!pWinHttpRequest -> AsyncOperate (&WINHTTPREQUEST::ReceiveResponse))
+				WinHttpPostCompleteHandle (false);
 			break;
 		
 		// Receive response succeed, go to next step
 		case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
-			WinHttpPostCallBack (true);
+			WinHttpPostCompleteHandle (true);
 			break;
 		
 		default:
@@ -85,30 +85,30 @@ bool POSTER::Post (std::string sPoster, std::string sSyntax, std::string sExpira
     if (!WINCVT::AnsiToUtf8 (sPoster, sPoster))
     	return false;
 
-    if (!pHttpClient -> OpenRequest (L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
+    if (!pWinHttpRequest -> OpenRequest (L"POST", L"/", NULL, WINHTTP_NO_REFERER, 
 		WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE))
 		return false;
 		
-	if (!pHttpClient -> SetOption (WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS))
+	if (!pWinHttpRequest -> SetOption (WINHTTP_OPTION_DISABLE_FEATURE, WINHTTP_DISABLE_REDIRECTS))
 	{
-		pHttpClient -> CloseRequest ();
+		pWinHttpRequest -> CloseRequest ();
 		return false;
 	}
 		
-	if (!pHttpClient -> AddHeader ({
+	if (!pWinHttpRequest -> AddHeader ({
 		{L"Content-type", L"multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW"}
 		}, WINHTTP_ADDREQ_FLAG_ADD))
 	{
-		pHttpClient -> CloseRequest ();
+		pWinHttpRequest -> CloseRequest ();
 		return false;
 	}
 		
 	// Set callback
 	using namespace std::placeholders;
-	pHttpClient -> SetRequestCallBack (std::bind (&POSTER::WinHttpStatusCallBack, this, _1, _2, _3));
+	pWinHttpRequest -> SetRequestCallBack (std::bind (&POSTER::WinHttpStatusCallBack, this, _1, _2, _3));
     
-    pHttpClient -> ClearContent ();
-    pHttpClient -> AddContent (FORMDATA, {
+    pWinHttpRequest -> ClearContent ();
+    pWinHttpRequest -> AddContent (FORMDATA, {
 		{"poster", sPoster},
 		{"syntax", sSyntax},
 		{"expiration", sExpiration},
@@ -116,7 +116,7 @@ bool POSTER::Post (std::string sPoster, std::string sSyntax, std::string sExpira
 	}, "WebKitFormBoundary7MA4YWxkTrZu0gW");
     
     // First asynchronous operation
-    return pHttpClient -> AsyncOperate (&HTTPCLIENT::SendRequest);
+    return pWinHttpRequest -> AsyncOperate (&WINHTTPREQUEST::SendRequest);
 }
 
 void POSTER::SetPostCompleteCallBack (std::function <void (std::wstring)> cbPostComplete)
@@ -126,13 +126,9 @@ void POSTER::SetPostCompleteCallBack (std::function <void (std::wstring)> cbPost
 
 bool POSTER::Initialize ()
 {
-	pHttpClient = new HTTPCLIENT;
+	pWinHttpRequest = new WINHTTPREQUEST;
 	
-	if (!pHttpClient -> OpenHttp (L"Paste", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, 
-		WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, WINHTTP_FLAG_ASYNC))
-		return false;
-	
-	if (!pHttpClient -> ConnectHttp (PASTE_SERVER, INTERNET_DEFAULT_HTTPS_PORT))
+	if (!pWinHttpRequest -> Initialize (L"Paste", PASTE_SERVER, INTERNET_DEFAULT_HTTPS_PORT, true))
 		return false;
 		
 	return true;
@@ -140,10 +136,10 @@ bool POSTER::Initialize ()
 
 void POSTER::UnInitialize ()
 {
-	if (pHttpClient)
+	if (pWinHttpRequest)
 	{
-		delete pHttpClient;
-		pHttpClient = nullptr;
+		delete pWinHttpRequest;
+		pWinHttpRequest = nullptr;
 	}
 }
 
@@ -204,20 +200,20 @@ bool POSTER::LoadFile (std::string sFilePath, std::string& sFile)
 	return WINCVT::WStringToString (sFile, wsTemp, CP_UTF8);
 }
 
-void POSTER::WinHttpPostCallBack (bool isSuccess)
+void POSTER::WinHttpPostCompleteHandle (bool isSuccess)
 {
 	if (isSuccess)
 	{	
 		std::wstring wsURL;
 		
-		if (pHttpClient -> ReadHeader (WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_NO_HEADER_INDEX, wsURL))
+		if (pWinHttpRequest -> ReadHeader (WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_NO_HEADER_INDEX, wsURL))
 		{
 			wsURL = PASTE_URL + wsURL;
 			
 			if (postcompleteCallBack)	
 				postcompleteCallBack (wsURL);
 
-			pHttpClient -> CloseRequest ();
+			pWinHttpRequest -> CloseRequest ();
 			return;
 		}
 	}
@@ -225,5 +221,5 @@ void POSTER::WinHttpPostCallBack (bool isSuccess)
 	if (postcompleteCallBack)	
 		postcompleteCallBack (L"");
 
-	pHttpClient -> CloseRequest ();
+	pWinHttpRequest -> CloseRequest ();
 }
